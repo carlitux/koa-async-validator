@@ -1,6 +1,6 @@
 {
-  "name": "express-validator",
-  "description": "Express middleware for the validator module.",
+  "name": "koa-validator",
+  "description": "Koa middleware for the validator module.",
   "author": "Christoph Tavan <dev@tavan.de>",
   "contributors": [
     "Chris O'Hara <cohara87@gmail.com>",
