@@ -379,7 +379,7 @@ function makeValidator (methodName, container) {
     args = args.concat(Array.prototype.slice.call(arguments));
 
     let result = container[methodName].apply(container, args);
-    console.log(container, args);
+    console.log(args);
     console.log(result);
     let isValid = (result.then) ? await result : result ;
 
