@@ -241,7 +241,7 @@ var koaValidator = function(options) {
 
 
     locations.forEach(function(location) {
-      req['sanitize' + _.capitalize(location)] = function(param) {
+      ctx['sanitize' + _.capitalize(location)] = function(param) {
         return new Sanitizer(param, req, [location]);
       };
     });
@@ -259,7 +259,7 @@ var koaValidator = function(options) {
     };
 
     locations.forEach(function(location) {
-      req['check' + _.capitalize(location)] = function(param, failMsg) {
+      ctx['check' + _.capitalize(location)] = function(param, failMsg) {
         if (_.isPlainObject(param)) {
           return validateSchema(param, req, location, options);
         }
@@ -379,6 +379,8 @@ function makeValidator (methodName, container) {
     args = args.concat(Array.prototype.slice.call(arguments));
 
     let result = container[methodName].apply(container, args);
+    console.log(container, args);
+    console.log(result);
     let isValid = (result.then) ? await result : result ;
 
     var error = formatErrors.call(this,

@@ -3,7 +3,7 @@
   "description": "Koa middleware for the validator module.",
   "author": "Luis Carlos Cruz Carballo <lcruzc@linkux-it.com",
   "contributors": [],
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://github.com/carlitux/koa-async-validator",
   "license": "MIT",
   "repository": {
