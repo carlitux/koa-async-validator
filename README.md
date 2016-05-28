@@ -1,62 +1,73 @@
-# express-validator
+# koa-async-validator
 
-[![npm version](https://badge.fury.io/js/express-validator.svg)](https://badge.fury.io/js/express-validator) [![Build Status](https://secure.travis-ci.org/ctavan/express-validator.png)](http://travis-ci.org/ctavan/express-validator) [![Dependency Status](https://david-dm.org/ctavan/express-validator.svg)](https://david-dm.org/ctavan/express-validator)
+[![npm version](https://badge.fury.io/js/koa-async-validator.svg)](https://badge.fury.io/js/koa-async-validator) [![Build Status](https://secure.travis-ci.org/ctavan/koa-async-validator.png)](http://travis-ci.org/ctavan/koa-async-validator) [![Dependency Status](https://david-dm.org/ctavan/koa-async-validator.svg)](https://david-dm.org/ctavan/koa-async-validator)
 
-An [express.js]( https://github.com/visionmedia/express ) middleware for
+An [koa.js]( https://github.com/koajs/koa ) middleware for
 [node-validator]( https://github.com/chriso/validator.js ).
 
 ## Installation
 
 ```
-npm install express-validator
+npm install koa-async-validator --save
 ```
+
+## Todo
+
+* Update tests
 
 ## Usage
 
 ```javascript
-var util = require('util'),
-    express = require('express'),
-    expressValidator = require('express-validator'),
-    app = express.createServer();
+import util from ('util');
+import Koa from ('koa');
+import koaValidator from ('koa-async-validator');
+import bodyParser from 'koa-bodyparser';
 
-app.use(express.bodyParser());
-app.use(expressValidator([options])); // this line must be immediately after express.bodyParser()!
+const app = new Koa();
 
-app.post('/:urlparam', function(req, res) {
+app.use(bodyParser());
+app.use(expressValidator([options])); // this line must be immediately after bodyParser()!
+
+
+app.use(asynx (ctx, next) => {
 
   // VALIDATION
   // checkBody only checks req.body; none of the other req parameters
   // Similarly checkParams only checks in req.params (URL params) and
   // checkQuery only checks req.query (GET params).
-  req.checkBody('postparam', 'Invalid postparam').notEmpty().isInt();
-  req.checkParams('urlparam', 'Invalid urlparam').isAlpha();
-  req.checkQuery('getparam', 'Invalid getparam').isInt();
+  ctx.checkBody('postparam', 'Invalid postparam').notEmpty().isInt();
+  ctx.checkParams('urlparam', 'Invalid urlparam').isAlpha();
+  ctx.checkQuery('getparam', 'Invalid getparam').isInt();
 
   // OR assert can be used to check on all 3 types of params.
-  // req.assert('postparam', 'Invalid postparam').notEmpty().isInt();
-  // req.assert('urlparam', 'Invalid urlparam').isAlpha();
-  // req.assert('getparam', 'Invalid getparam').isInt();
+  // ctx.assert('postparam', 'Invalid postparam').notEmpty().isInt();
+  // ctx.assert('urlparam', 'Invalid urlparam').isAlpha();
+  // ctx.assert('getparam', 'Invalid getparam').isInt();
 
   // SANITIZATION
   // as with validation these will only validate the corresponding
   // request object
-  req.sanitizeBody('postparam').toBoolean();
-  req.sanitizeParams('urlparam').toBoolean();
-  req.sanitizeQuery('getparam').toBoolean();
+  ctx.sanitizeBody('postparam').toBoolean();
+  ctx.sanitizeParams('urlparam').toBoolean();
+  ctx.sanitizeQuery('getparam').toBoolean();
 
   // OR find the relevent param in all areas
-  req.sanitize('postparam').toBoolean();
+  ctx.sanitize('postparam').toBoolean();
 
-  var errors = req.validationErrors();
+  let errors = await req.validationErrors();
+
   if (errors) {
-    res.send('There have been validation errors: ' + util.inspect(errors), 400);
-    return;
+    ctx.body = `There have been validation errors: ${ util.inspect(errors) }`;
+    ctx.status = 400;
+  } else {
+    ctx.body = {
+      urlparam: req.params.urlparam,
+      getparam: req.params.getparam,
+      postparam: req.params.postparam
+    }
   }
-  res.json({
-    urlparam: req.params.urlparam,
-    getparam: req.params.getparam,
-    postparam: req.params.postparam
-  });
+
+  await next();
 });
 
 app.listen(8888);
@@ -64,6 +75,7 @@ app.listen(8888);
 
 Which will result in:
 
+*Needs to be updated*
 ```
 $ curl -d 'postparam=1' http://localhost:8888/test?getparam=1
 {"urlparam":"test","getparam":"1","postparam":true}
@@ -86,11 +98,11 @@ There have been validation errors: [
 ####`errorFormatter`
 _function(param,msg,value)_
 
-The `errorFormatter` option can be used to specify a function that can be used to format the objects that populate the error array that is returned in `req.validationErrors()`. It should return an `Object` that has `param`, `msg`, and `value` keys defined.
+The `errorFormatter` option can be used to specify a function that can be used to format the objects that populate the error array that is returned in `ctx.validationErrors()`. It should return an `Object` that has `param`, `msg`, and `value` keys defined.
 
 ```javascript
 // In this example, the formParam value is going to get morphed into form body format useful for printing.
-app.use(expressValidator({
+app.use(koaValidator({
   errorFormatter: function(param, msg, value) {
       var namespace = param.split('.')
       , root    = namespace.shift()
@@ -117,7 +129,7 @@ The `customValidators` option can be used to add additional validation methods a
 Define your custom validators:
 
 ```javascript
-app.use(expressValidator({
+app.use(koaValidator({
  customValidators: {
     isArray: function(value) {
         return Array.isArray(value);
@@ -130,8 +142,8 @@ app.use(expressValidator({
 ```
 Use them with their validator name:
 ```javascript
-req.checkBody('users', 'Users must be an array').isArray();
-req.checkQuery('time', 'Time must be an integer great than or equal to 5').isInt().gte(5)
+ctx.checkBody('users', 'Users must be an array').isArray();
+ctx.checkQuery('time', 'Time must be an integer great than or equal to 5').isInt().gte(5)
 ```
 ####`customSanitizers`
 _{ "sanitizerName": function(value, [additional arguments]), ... }_
@@ -141,7 +153,7 @@ The `customSanitizers` option can be used to add additional sanitizers methods a
 Define your custom sanitizers:
 
 ```javascript
-app.use(expressValidator({
+app.use(koaValidator({
  customSanitizers: {
     toSanitizeSomehow: function(value) {
         var newValue = value;//some operations
@@ -157,47 +169,43 @@ req.sanitize('address').toSanitizeSomehow();
 
 ## Validation
 
-#### req.check();
+#### ctx.check();
 ```javascript
-   req.check('testparam', 'Error Message').notEmpty().isInt();
-   req.check('testparam.child', 'Error Message').isInt(); // find nested params
-   req.check(['testparam', 'child'], 'Error Message').isInt(); // find nested params
+   ctx.check('testparam', 'Error Message').notEmpty().isInt();
+   ctx.check('testparam.child', 'Error Message').isInt(); // find nested params
+   ctx.check(['testparam', 'child'], 'Error Message').isInt(); // find nested params
 ```
 
 Starts the validation of the specifed parameter, will look for the parameter in `req` in the order `params`, `query`, `body`, then validate, you can use 'dot-notation' or an array to access nested values.
 
-If a validator takes in params, you would call it like `req.assert('reqParam').contains('thisString');`.
+If a validator takes in params, you would call it like `ctx.assert('reqParam').contains('thisString');`.
 
 Validators are appended and can be chained. See [chriso/validator.js](https://github.com/chriso/validator.js) for available validators, or [add your own](#customvalidators).
 
-#### req.assert();
-Alias for [req.check()](#reqcheck).
+#### ctx.assert();
+Alias for [ctx.check()](#reqcheck).
 
-#### req.validate();
-Alias for [req.check()](#reqcheck).
+#### ctx.validate();
+Alias for [ctx.check()](#reqcheck).
 
-#### req.checkBody();
-Same as [req.check()](#reqcheck), but only looks in `req.body`.
+#### ctx.checkBody();
+Same as [ctx.check()](#reqcheck), but only looks in `ctx.req.body`.
 
-#### req.checkQuery();
-Same as [req.check()](#reqcheck), but only looks in `req.query`.
+#### ctx.checkQuery();
+Same as [ctx.check()](#reqcheck), but only looks in `ctx.req.query`.
 
-#### req.checkParams();
-Same as [req.check()](#reqcheck), but only looks in `req.params`.
+#### ctx.checkParams();
+Same as [ctx.check()](#reqcheck), but only looks in `ctx.req.params`.
 
-#### req.checkHeaders();
-Only checks `req.headers`. This method is not covered by the general `req.check()`.
+#### ctx.checkHeaders();
+Only checks `ctx.headers`. This method is not covered by the general `ctx.check()`.
 
 ## Asynchronous Validation
 
-If you need to perform asynchronous validation, for example checking a database if a username has been taken already, your custom validator can return a promise.
-
-You **MUST** use `asyncValidationErrors` which returns a promise to check for errors, otherwise the validator promises won't be resolved.
-
- *`asyncValidationErrors` will also return any regular synchronous validation errors.*
+If you need to perform asynchronous validation, for example checking a database if a username has been taken already, your custom validator can return a promise or the customValidators should be async functions.
 
  ```javascript
-app.use(expressValidator({
+app.use(koaValidator({
   customValidators: {
     isUsernameAvailable: function(username) {
       return new Promise(function(resolve, reject) {
@@ -221,23 +229,15 @@ app.use(expressValidator({
 }));
 
 req.check('username', 'Username Taken').isUsernameAvailable();
-
-req.asyncValidationErrors()
-.then(function() {
-// create user
-})
-.catch(function(errors) {
-  res.send(errors);
-});
-
 ```
+
 ## Validation by Schema
 
 Alternatively you can define all your validations at once using a simple schema. This also enables per-validator error messages.
 Schema validation will be used if you pass an object to any of the validator methods.
 
 ```javascript
-req.checkBody({
+ctx.checkBody({
  'email': {
     notEmpty: true,
     isEmail: {
@@ -266,7 +266,7 @@ req.checkBody({
 You can also define a specific location to validate against in the schema by adding `in` parameter as shown below:
 
 ```javascript
-req.check({
+ctx.check({
  'email': {
     in: 'query',
     notEmpty: true,
@@ -281,7 +281,7 @@ Please remember that the `in` attribute will have always highest priority. This 
 
 
 ```javascript
-var schema = {
+const schema = {
  'email': {
     in: 'query',
     notEmpty: true,
@@ -299,10 +299,10 @@ var schema = {
   }
 };
 
-req.check(schema);        // will check 'password' no matter where it is but 'email' in query params
-req.checkQuery(schema);   // will check 'password' and 'email' in query params
-req.checkBody(schema);    // will check 'password' in body but 'email' in query params
-req.checkParams(schema);  // will check 'password' in path params but 'email' in query params
+ctx.check(schema);        // will check 'password' no matter where it is but 'email' in query params
+ctx.checkQuery(schema);   // will check 'password' and 'email' in query params
+ctx.checkBody(schema);    // will check 'password' in body but 'email' in query params
+ctx.checkParams(schema);  // will check 'password' in path params but 'email' in query params
 ```
 
 Currently supported location are `'body', 'params', 'query'`. If you provide a location parameter that is not supported, the validation process for current parameter will be skipped.
@@ -312,12 +312,12 @@ Currently supported location are `'body', 'params', 'query'`. If you provide a l
 You have two choices on how to get the validation errors:
 
 ```javascript
-req.assert('email', 'required').notEmpty();
-req.assert('email', 'valid email required').isEmail();
-req.assert('password', '6 to 20 characters required').len(6, 20);
+ctx.assert('email', 'required').notEmpty();
+ctx.assert('email', 'valid email required').isEmail();
+ctx.assert('password', '6 to 20 characters required').len(6, 20);
 
-var errors = req.validationErrors(); // Or req.asyncValidationErrors();
-var mappedErrors = req.validationErrors(true); // Or req.asyncValidationErrors(true);
+let errors = ctx.validationErrors();
+let mappedErrors = ctx.validationErrors(true);
 ```
 
 errors:
@@ -353,10 +353,10 @@ mappedErrors:
 You can provide an error message for a single validation with `.withMessage()`. This can be chained with the rest of your validation, and if you don't use it for one of the validations then it will fall back to the default.
 
 ```javascript
-req.assert('email', 'Invalid email')
+ctx.assert('email', 'Invalid email')
     .notEmpty().withMessage('Email is required')
     .isEmail();
-var errors = req.validationErrors();
+let errors = ctx.validationErrors();
 ```
 errors:
 
@@ -372,7 +372,7 @@ errors:
 You can use the `optional()` method to skip validation. By default, it only skips validation if the key does not exist on the request object. If you want to skip validation based on the property being falsy (null, undefined, etc), you can pass in `{ checkFalsy: true }`.
 
 ```javascript
-req.checkBody('email').optional().isEmail();
+ctx.checkBody('email').optional().isEmail();
 //if there is no error, req.body.email is either undefined or a valid mail.
 ```
 
@@ -381,38 +381,39 @@ req.checkBody('email').optional().isEmail();
 #### req.sanitize();
 ```javascript
 
-req.body.comment = 'a <span>comment</span>';
-req.body.username = '   a user    ';
+ctx.req.body.comment = 'a <span>comment</span>';
+ctx.req.body.username = '   a user    ';
 
-req.sanitize('comment').escape(); // returns 'a &lt;span&gt;comment&lt;/span&gt;'
-req.sanitize('username').trim(); // returns 'a user'
+ctx.sanitize('comment').escape(); // returns 'a &lt;span&gt;comment&lt;/span&gt;'
+ctx.sanitize('username').trim(); // returns 'a user'
 
-console.log(req.body.comment); // 'a &lt;span&gt;comment&lt;/span&gt;'
-console.log(req.body.username); // 'a user'
+console.log(ctx.req.body.comment); // 'a &lt;span&gt;comment&lt;/span&gt;'
+console.log(ctx.req.body.username); // 'a user'
 
 ```
 
 Sanitizes the specified parameter (using 'dot-notation' or array), the parameter will be updated to the sanitized result. Cannot be chained, and will return the result. See [chriso/validator.js](https://github.com/chriso/validator.js) for available sanitizers, or [add your own](#customsanitizers).
 
-If a sanitizer takes in params, you would call it like `req.sanitize('reqParam').whitelist(['a', 'b', 'c']);`.
+If a sanitizer takes in params, you would call it like `ctx.sanitize('reqParam').whitelist(['a', 'b', 'c']);`.
 
-If the parameter is present in multiple places with the same name e.g. `req.params.comment` & `req.query.comment`, they will all be sanitized.
+If the parameter is present in multiple places with the same name e.g. `ctx.params.comment` & `ctx.query.comment`, they will all be sanitized.
 
-#### req.filter();
-Alias for [req.sanitize()](#reqsanitize).
+#### ctx.filter();
+Alias for [ctx.sanitize()](#reqsanitize).
 
-#### req.sanitizeBody();
-Same as [req.sanitize()](#reqsanitize), but only looks in `req.body`.
+#### ctx.sanitizeBody();
+Same as [ctx.sanitize()](#reqsanitize), but only looks in `ctx.body`.
 
-#### req.sanitizeQuery();
-Same as [req.sanitize()](#reqsanitize), but only looks in `req.query`.
+#### ctx.sanitizeQuery();
+Same as [ctx.sanitize()](#reqsanitize), but only looks in `ctx.query`.
 
-#### req.sanitizeParams();
-Same as [req.sanitize()](#reqsanitize), but only looks in `req.params`.
+#### ctx.sanitizeParams();
+Same as [ctx.sanitize()](#reqsanitize), but only looks in `ctx.params`.
 
-#### req.sanitizeHeaders();
-Only sanitizes `req.headers`. This method is not covered by the general `req.sanitize()`.
+#### ctx.sanitizeHeaders();
+Only sanitizes `ctx.headers`. This method is not covered by the general `ctx.sanitize()`.
 
+*This maybe wont be a feature*
 ### Regex routes
 
 Express allows you to define regex routes like:
@@ -433,10 +434,8 @@ See [CHANGELOG.md](CHANGELOG.md)
 
 ## Contributors
 
-- Christoph Tavan <dev@tavan.de> - Wrap the gist in an npm package
-- @orfaust - Add `validationErrors()` and nested field support
-- @zero21xxx - Added `checkBody` function
+All this is based on [express-validator](https://github.com/ctavan/express-validator)
 
 ## License
 
-Copyright (c) 2010 Chris O'Hara <cohara87@gmail.com>, MIT License
+Copyright (c) 2016 Luis Carlos Cruz Carballo <lcruzc@linkux-it.com>, MIT License
