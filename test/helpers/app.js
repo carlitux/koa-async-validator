@@ -1,5 +1,5 @@
 // Sample app
-var express = require('express');
+var express = require('koa');
 var expressValidator = require('../../index');
 var bodyParser = require('body-parser');
 
@@ -32,7 +32,7 @@ module.exports = function(validation) {
     },
     customSanitizers: {
       toTestSanitize: function() {
-        return "!!!!";
+        return '!!!!';
       }
     }
   }));

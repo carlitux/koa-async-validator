@@ -1,0 +1,27 @@
+{
+    "parser": "babel-eslint",
+    "settings": {
+        "ecmascript": 7
+    },
+    "ecmaFeatures": {
+        "blockBindings": true,
+        "forOf": true,
+        "generators": true,
+        "destructuring": true,
+        "classes": true,
+        "defaultParams": true,
+        "modules": true,
+        "binaryLiterals": true
+    },
+    "rules": {
+        "no-unused-vars": 0,
+        "camelcase": 0,
+        "no-underscore-dangle": 0,
+        "quotes": [2, "single"],
+        "strict": [2, "never"]
+    },
+    "env": {
+        "browser": true,
+        "node": true
+    }
+}

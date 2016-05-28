@@ -1,1 +1,1 @@
-module.exports = require('./lib/express_validator.js');
+module.exports = require('./lib/koa_validator.js');

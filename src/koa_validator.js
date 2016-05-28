@@ -1,10 +1,10 @@
-var validator = require('validator');
-var _ = require('lodash');
-var Promise = require('bluebird');
+import validator from 'validator';
+import _ from 'lodash';
+
 
 // When validator upgraded to v5, they removed automatic string coercion
 // The next few methods (up to validator.init()) restores that functionality
-// so that express-validator can continue to function normally
+// so that koa-async-validator can continue to function normally
 validator.extend = function(name, fn) {
   validator[name] = function() {
     var args = Array.prototype.slice.call(arguments);
@@ -12,6 +12,7 @@ validator.extend = function(name, fn) {
     return fn.apply(validator, args);
   };
 };
+
 
 validator.init = function() {
   for (var name in validator) {
@@ -24,6 +25,7 @@ validator.init = function() {
   }
 };
 
+
 validator.toString = function(input) {
   if (typeof input === 'object' && input !== null && input.toString) {
     input = input.toString();
@@ -33,6 +35,7 @@ validator.toString = function(input) {
   return '' + input;
 };
 
+
 validator.toDate = function(date) {
   if (Object.prototype.toString.call(date) === '[object Date]') {
     return date;
@@ -41,11 +44,17 @@ validator.toDate = function(date) {
   return !isNaN(date) ? new Date(date) : null;
 };
 
+
 validator.init();
+
 
 // validators and sanitizers not prefixed with is/to
 var additionalValidators = ['contains', 'equals', 'matches'];
-var additionalSanitizers = ['trim', 'ltrim', 'rtrim', 'escape', 'stripLow', 'whitelist', 'blacklist', 'normalizeEmail'];
+var additionalSanitizers = [
+  'trim', 'ltrim', 'rtrim', 'escape', 'stripLow',
+  'whitelist', 'blacklist', 'normalizeEmail'
+];
+
 
 /**
  * Initializes a chain of validators
@@ -58,15 +67,19 @@ var additionalSanitizers = ['trim', 'ltrim', 'rtrim', 'escape', 'stripLow', 'whi
  * @param  {object}             options       options containing error formatter
  */
 
-function ValidatorChain(param, failMsg, req, location, options) {
-  this.errorFormatter = options.errorFormatter;
-  this.param = param;
-  this.value = location ? _.get(req[location], param) : undefined;
-  this.validationErrors = [];
-  this.failMsg = failMsg;
-  this.req = req;
-  this.lastError = null; // used by withMessage to get the values of the last error
-  return this;
+class ValidatorChain {
+
+  constructor (param, failMsg, req, location, options) {
+    this.errorFormatter = options.errorFormatter;
+    this.param = param;
+    this.value = location ? _.get(req[location], param) : undefined;
+    this.validationErrors = [];
+    this.failMsg = failMsg;
+    this.req = req;
+    this.lastError = null; // used by withMessage to get the values of the last error
+    return this;
+  }
+
 }
 
 
@@ -79,16 +92,21 @@ function ValidatorChain(param, failMsg, req, location, options) {
  * @param  {[type]}             location        request property to find value
  */
 
-function Sanitizer(param, req, locations) {
-  this.values = locations.map(function(location) {
-    return _.get(req[location], param);
-  });
+class Sanitizer {
 
-  this.req = req;
-  this.param = param;
-  this.locations = locations;
-  return this;
+  constructor (param, req, locations) {
+    this.values = locations.map(function(location) {
+      return _.get(req[location], param);
+    });
+
+    this.req = req;
+    this.param = param;
+    this.locations = locations;
+    return this;
+  }
+
 }
+
 
 /**
  * Adds validation methods to request object via express middleware
@@ -100,7 +118,8 @@ function Sanitizer(param, req, locations) {
 
 var koaValidator = function(options) {
   options = options || {};
-  var defaults = {
+
+  let defaults = {
     customValidators: {},
     customSanitizers: {},
     errorFormatter: function(param, msg, value) {
@@ -116,14 +135,18 @@ var koaValidator = function(options) {
 
   // _.set validators and sanitizers as prototype methods on corresponding chains
   _.forEach(validator, function(method, methodName) {
-    if (methodName.match(/^is/) || _.includes(additionalValidators, methodName)) {
-      ValidatorChain.prototype[methodName] = makeValidator(methodName, validator);
+    if (methodName.match(/^is/) ||
+      _.includes(additionalValidators, methodName)) {
+      ValidatorChain.prototype[methodName] =
+        makeValidator(methodName, validator);
     }
 
-    if (methodName.match(/^to/) || _.includes(additionalSanitizers, methodName)) {
+    if (methodName.match(/^to/) ||
+      _.includes(additionalSanitizers, methodName)) {
       Sanitizer.prototype[methodName] = makeSanitizer(methodName, validator);
     }
   });
+
 
   ValidatorChain.prototype.notEmpty = function() {
     return this.isLength({
@@ -165,10 +188,13 @@ var koaValidator = function(options) {
               // Suppress errors from original promise - they should go to the new one.
               // Otherwise bluebird throws an 'unhandled rejection' error
             });
-            var error = formatErrors.call(this.lastError.context, this.lastError.param, message, this.lastError.value);
+            var error = formatErrors.call(this.lastError.context,
+              this.lastError.param, message, this.lastError.value);
+
             var promise = this.lastError.promise.catch(function() {
                 return Promise.reject(error);
             });
+
             this.req._asyncValidationErrors.push(promise);
         } else {
             this.validationErrors.pop();
@@ -179,66 +205,40 @@ var koaValidator = function(options) {
             this.lastError = null;
         }
     }
+
     return this;
   };
 
   _.forEach(options.customValidators, function(method, customValidatorName) {
-    ValidatorChain.prototype[customValidatorName] = makeValidator(customValidatorName, options.customValidators);
+    ValidatorChain.prototype[customValidatorName] =
+      makeValidator(customValidatorName, options.customValidators);
   });
 
   _.forEach(options.customSanitizers, function(method, customSanitizerName) {
-    Sanitizer.prototype[customSanitizerName] = makeSanitizer(customSanitizerName, options.customSanitizers);
+    Sanitizer.prototype[customSanitizerName] =
+      makeSanitizer(customSanitizerName, options.customSanitizers);
   });
+
 
   return async (ctx, next) => {
     var locations = ['body', 'params', 'query'];
     let req = ctx.req;
 
-    req._validationErrors = [];
-    req._asyncValidationErrors = [];
-    
-    req.validationErrors = function(mapped, promisesResolved) {
-      if (!promisesResolved && req._asyncValidationErrors.length > 0) {
-        console.warn('WARNING: You have asynchronous validators but you have not used asyncValidateErrors to check for errors.');
-      }
+    ctx._validationErrors = [];
 
-      if (mapped && req._validationErrors.length > 0) {
+    ctx.validationErrors = function(mapped) {
+      if (mapped && ctx._validationErrors.length > 0) {
         var errors = {};
-        req._validationErrors.forEach(function(err) {
+        ctx._validationErrors.forEach(function(err) {
           errors[err.param] = err;
         });
 
         return errors;
       }
 
-      return req._validationErrors.length > 0 ? req._validationErrors : false;
+      return ctx._validationErrors.length > 0 ? ctx._validationErrors : false;
     };
 
-    req.asyncValidationErrors = function(mapped) {
-      return new Promise(function(resolve, reject) {
-        var promises = req._asyncValidationErrors;
-        // Migrated using the recommended fix from
-        // http://bluebirdjs.com/docs/api/reflect.html
-        Promise.all(promises.map(function(promise) {
-          // Must convert to Bluebird promise in case they are using native
-          // Node promises since reflect() is not a native promise method
-          // http://bluebirdjs.com/docs/api/reflect.html#comment-2369616577
-          return Promise.resolve(promise).reflect();
-        })).then(function(results) {
-
-          results.forEach(function(result) {
-            if (result.isRejected()) {
-              req._validationErrors.push(result.reason());
-            }
-          });
-
-          if (req._validationErrors.length > 0) {
-            return reject(req.validationErrors(mapped, true));
-          }
-          resolve();
-        });
-      });
-    };
 
     locations.forEach(function(location) {
       req['sanitize' + _.capitalize(location)] = function(param) {
@@ -246,7 +246,7 @@ var koaValidator = function(options) {
       };
     });
 
-    req.sanitizeHeaders = function(param) {
+    ctx.sanitizeHeaders = function(param) {
       if (param === 'referrer') {
         param = 'referer';
       }
@@ -254,7 +254,7 @@ var koaValidator = function(options) {
       return new Sanitizer(param, req, ['headers']);
     };
 
-    req.sanitize = function(param) {
+    ctx.sanitize = function(param) {
       return new Sanitizer(param, req, locations);
     };
 
@@ -267,11 +267,11 @@ var koaValidator = function(options) {
       };
     });
 
-    req.checkFiles = function(param, failMsg) {
+    ctx.checkFiles = function(param, failMsg) {
       return new ValidatorChain(param, failMsg, req, 'files', options);
     };
 
-    req.checkHeaders = function(param, failMsg) {
+    ctx.checkHeaders = function(param, failMsg) {
       if (param === 'referrer') {
         param = 'referer';
       }
@@ -279,16 +279,16 @@ var koaValidator = function(options) {
       return new ValidatorChain(param, failMsg, req, 'headers', options);
     };
 
-    req.check = function(param, failMsg) {
+    ctx.check = function(param, failMsg) {
       if (_.isPlainObject(param)) {
         return validateSchema(param, req, 'any', options);
       }
       return new ValidatorChain(param, failMsg, req, locate(req, param), options);
     };
 
-    req.filter = req.sanitize;
-    req.assert = req.check;
-    req.validate = req.check;
+    ctx.filter = ctx.sanitize;
+    ctx.assert = ctx.check;
+    ctx.validate = ctx.check;
 
     await next();
   };
@@ -368,8 +368,8 @@ function validateSchema(schema, req, loc, options) {
  * @return {function}
  */
 
-function makeValidator(methodName, container) {
-  return function() {
+function makeValidator (methodName, container) {
+  return async function () {
     if (this.skipValidating) {
       return this;
     }
@@ -378,25 +378,17 @@ function makeValidator(methodName, container) {
     args.push(this.value);
     args = args.concat(Array.prototype.slice.call(arguments));
 
-    var isValid = container[methodName].apply(container, args);
-    var error = formatErrors.call(this, this.param, this.failMsg || 'Invalid value', this.value);
+    let result = container[methodName].apply(container, args);
+    let isValid = (result.then) ? await result : result ;
 
-    if (isValid.then) {
-      var promise = isValid.catch(function() {
-        return Promise.reject(error);
-      });
-      this.lastError = {
-        promise: isValid,
-        param: this.param,
-        value: this.value,
-        context: this,
-        isAsync: true
-      };
-      this.req._asyncValidationErrors.push(promise);
-    } else if (!isValid) {
+    var error = formatErrors.call(this,
+      this.param, this.failMsg || 'Invalid value', this.value);
+
+    if (!isValid) {
       this.validationErrors.push(error);
-      this.req._validationErrors.push(error);
-      this.lastError = { param: this.param, value: this.value, isAsync: false };
+      this.ctx._validationErrors.push(error);
+      this.lastError =
+        { param: this.param, value: this.value, isAsync: false };
     } else {
       this.lastError = null;
     }
