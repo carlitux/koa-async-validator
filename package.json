@@ -39,6 +39,7 @@
     "babel-runtime": "^6.9.0",
     "body-parser": "1.12.3",
     "chai": "2.3.0",
+    "eslint": "^2.11.0",
     "github-changes": "1.0.2",
     "koa": "^2.0.0",
     "koa-bodyparser": "^2.2.0",

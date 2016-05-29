@@ -1,6 +1,6 @@
 # koa-async-validator
 
-[![npm version](https://badge.fury.io/js/koa-async-validator.svg)](https://badge.fury.io/js/koa-async-validator) [![Build Status](https://secure.travis-ci.org/ctavan/koa-async-validator.png)](http://travis-ci.org/ctavan/koa-async-validator) [![Dependency Status](https://david-dm.org/ctavan/koa-async-validator.svg)](https://david-dm.org/ctavan/koa-async-validator)
+[![npm version](https://badge.fury.io/js/koa-async-validator.svg)](https://badge.fury.io/js/koa-async-validator) [![Build Status](https://secure.travis-ci.org/carlitux/koa-async-validator.png)](http://travis-ci.org/carlitux/koa-async-validator) [![Dependency Status](https://david-dm.org/carlitux/koa-async-validator.svg)](https://david-dm.org/carlitux/koa-async-validator)
 
 An [koa.js]( https://github.com/koajs/koa ) middleware for
 [node-validator]( https://github.com/chriso/validator.js ).
