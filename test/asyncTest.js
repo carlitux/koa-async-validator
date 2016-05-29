@@ -1,8 +1,7 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
 var errorMessage = 'Parameter is not 42';
 
 // There are three ways to pass parameters to express:
@@ -12,14 +11,12 @@ var errorMessage = 'Parameter is not 42';
 // These test show that req.checkQuery are only interested in req.query values, all other
 // parameters will be ignored.
 
-function validation(req, res) {
-  req.checkQuery('testparam', errorMessage).notEmpty().isAsyncTest();
+async function validation(ctx, next) {
+  ctx.checkQuery('testparam', errorMessage).notEmpty().isAsyncTest();
 
-  req.asyncValidationErrors().then(function() {
-    res.send({ testparam: req.query.testparam });
-  }, function(errors) {
-    return res.send(errors);
-  });
+  let errors = await ctx.validationErrors();
+
+  ctx.body = (errors) ? errors : { testparam: ctx.query.testparam };
 }
 
 function fail(body, length) {
@@ -32,7 +29,7 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body, length);
@@ -41,7 +38,7 @@ function getRoute(path, test, length, done) {
 }
 
 function postRoute(path, data, test, length, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -54,7 +51,8 @@ function postRoute(path, data, test, length, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#asyncTest()', function() {

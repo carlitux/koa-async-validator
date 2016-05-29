@@ -1,8 +1,7 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
 var errorMessage = 'Parameter is not an integer';
 
 // There are three ways to pass parameters to express:
@@ -12,14 +11,16 @@ var errorMessage = 'Parameter is not an integer';
 // URL params take precedence over GET params which take precedence over
 // POST params.
 
-function validation(req, res) {
-  req.check('testparam', errorMessage).notEmpty().isInt();
+async function validation(ctx, next) {
+  ctx.check('testparam', errorMessage).notEmpty().isInt();
 
-  var errors = req.validationErrors();
+  var errors = await ctx.validationErrors();
+
   if (errors) {
-    return res.send(errors);
+    ctx.body = errors;
+  } else {
+    ctx.body = { testparam: ctx.params.testparam || ctx.query.testparam || ctx.request.body.testparam };
   }
-  res.send({ testparam: req.params.testparam || req.query.testparam || req.body.testparam });
 }
 
 function fail(body) {
@@ -32,7 +33,7 @@ function pass(body) {
 }
 
 function getRoute(path, test, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body);
@@ -41,7 +42,7 @@ function getRoute(path, test, done) {
 }
 
 function postRoute(path, data, test, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -54,7 +55,8 @@ function postRoute(path, data, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#check()/#assert()/#validate()', function() {

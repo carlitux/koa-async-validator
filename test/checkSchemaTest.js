@@ -1,8 +1,7 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
 var errorMsg = 'Parameter is not an integer.';
 var errorMsgOutOfRange = 'Parameter is out of range or not int.';
 
@@ -56,43 +55,45 @@ var schema = {
   }
 };
 
-function validationSendResponse(req, res) {
-  var errors = req.validationErrors();
+async function validationSendResponse(ctx, next) {
+  let errors = await ctx.validationErrors();
+
   if (errors) {
-    return res.send(errors);
+    ctx.body = errors;
+  } else {
+    ctx.body = {
+      testparam: ctx.params.testparam,
+      testquery: ctx.query.testquery,
+      skipped: ctx.query.skipped,
+      numInQuery: ctx.query.numInQuery
+    };
   }
 
-  res.send({
-    testparam: req.params.testparam,
-    testquery: req.query.testquery,
-    skipped: req.query.skipped,
-    numInQuery: req.query.numInQuery
-  });
 }
 
-function validation(req, res) {
-
-  req.check(schema);
-  validationSendResponse(req, res);
+async function validation(ctx, next) {
+  ctx.check(schema);
+  await validationSendResponse(ctx, next);
 }
 
-function validationQuery(req, res) {
 
-  req.checkQuery(schema);
-  validationSendResponse(req, res);
+async function validationQuery(ctx, next) {
+  ctx.checkQuery(schema);
+  await validationSendResponse(ctx, next);
 }
 
-function validationParams(req, res) {
 
-  req.checkParams(schema);
-  validationSendResponse(req, res);
+async function validationParams(ctx, next) {
+  ctx.checkParams(schema);
+  await validationSendResponse(ctx, next);
 }
 
-function validationBody(req, res) {
 
-  req.checkBody(schema);
-  validationSendResponse(req, res);
+async function validationBody (ctx, next) {
+  ctx.checkBody(schema);
+  await validationSendResponse(ctx, next);
 }
+
 
 function failParams(body, length) {
   expect(body).to.have.length(length);
@@ -123,8 +124,9 @@ function failQueryParams(params, length) {
   expect(params[1]).to.have.property('msg', errorMsgOutOfRange);
 }
 
+
 function getRoute(path, test, length, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body, length);
@@ -138,7 +140,8 @@ describe('Check defining validator location inside schema validators', function(
   // order to use a new validation function in each file
   before(function() {
     delete require.cache[require.resolve('./helpers/app')];
-    app = require('./helpers/app')(validation);
+    let app = require('./helpers/app')(validation);
+    request = require('supertest-koa-agent')(app);
   });
 
   it('should validate against schema with query and params locations', function(done) {
@@ -165,7 +168,8 @@ describe('Check defining validator location inside schema validators by checkQue
   // order to use a new validation function in each file
   before(function() {
     delete require.cache[require.resolve('./helpers/app')];
-    app = require('./helpers/app')(validationQuery);
+    let app = require('./helpers/app')(validationQuery);
+    request = require('supertest-koa-agent')(app);
   });
 
   it('should validate against schema with query and params locations', function(done) {
@@ -184,7 +188,8 @@ describe('Check defining validator location inside schema validators by checkPar
   // order to use a new validation function in each file
   before(function() {
     delete require.cache[require.resolve('./helpers/app')];
-    app = require('./helpers/app')(validationParams);
+    let app = require('./helpers/app')(validationParams);
+    request = require('supertest-koa-agent')(app);
   });
 
   it('should fail when searching for query param in the path params', function(done) {
@@ -199,7 +204,8 @@ describe('Check defining validator location inside schema validators by checkBod
   // order to use a new validation function in each file
   before(function() {
     delete require.cache[require.resolve('./helpers/app')];
-    app = require('./helpers/app')(validationBody);
+    let app = require('./helpers/app')(validationBody);
+    request = require('supertest-koa-agent')(app);
   });
 
   it('should fail when searching for query param in the body', function(done) {

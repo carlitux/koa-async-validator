@@ -1,24 +1,24 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
 var errorMessage = 'Default error message';
 var mustBeTwoDigitsMessage = 'testparam must have two digits';
 var mustBeIntegerMessage = 'testparam must be an integer';
 
-function validation(req, res) {
-  req.checkParams('testparam', errorMessage)
+
+async function validation(ctx, next) {
+  ctx.checkParams('testparam', errorMessage)
     .notEmpty() // with default message
     .isInt().withMessage(mustBeIntegerMessage)
     .isInt() // with default message
     .isLength({ min: 2, max: 2 }).withMessage(mustBeTwoDigitsMessage);
-  var errors = req.validationErrors();
-  if (errors) {
-    return res.send(errors);
-  }
-  res.send({ testparam: req.params.testparam });
+  var errors = await ctx.validationErrors();
+
+  ctx.body = (errors) ? errors : { testparam: ctx.params.testparam };
+
 }
+
 
 function fail(expectedMessage) {
   if (Array.isArray(expectedMessage)) {
@@ -41,7 +41,7 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body, length);
@@ -53,7 +53,8 @@ function getRoute(path, test, length, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#withMessage()', function() {
@@ -73,20 +74,24 @@ describe('#withMessage()', function() {
       getRoute('/199', fail(mustBeTwoDigitsMessage), 1, done);
     });
 
-    it('should update the error message only if the preceeding validation was the one to fail', function() {
-      var validator = require('../lib/express_validator')();
-      var req = {
-        body: {
-          testParam: 'abc'
+    it('should update the error message only if the preceeding validation was the one to fail', async function() {
+      var validator = require('../src/koa_validator')();
+      var ctx = {
+        request: {
+          body: {
+            testParam: 'abc'
+          }
         }
       };
 
-      validator(req, {}, function() {});
-      req.check('testParam', 'Default Error Message')
+      validator(ctx, {}, function() {});
+
+      ctx.check('testParam', 'Default Error Message')
         .isInt() // should produce 'Default Error Message'
         .isLength({ min: 2 }).withMessage('Custom Error Message');
 
-      expect(req.validationErrors()).to.deep.equal([
+      let errors = await ctx.validationErrors();
+      expect(errors).to.deep.equal([
         { param: 'testParam', msg: 'Default Error Message', value: 'abc' }
       ]);
     });

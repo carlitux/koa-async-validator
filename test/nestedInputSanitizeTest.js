@@ -1,11 +1,11 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
-function validation(req, res) {
-  req.sanitize(['user', 'fields', 'email']).trim();
-  res.send( req.body );
+
+async function validation(ctx, next) {
+  ctx.sanitize(['user', 'fields', 'email']).trim();
+  ctx.body = ctx.request.body;
 }
 
 function pass(body) {
@@ -13,7 +13,7 @@ function pass(body) {
 }
 
 function postRoute(path, data, test, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -26,7 +26,8 @@ function postRoute(path, data, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#nestedInputSanitizers', function() {

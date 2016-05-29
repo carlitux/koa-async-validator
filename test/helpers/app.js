@@ -1,10 +1,11 @@
 // Sample app
-var express = require('koa');
-var expressValidator = require('../../index');
-var bodyParser = require('body-parser');
+import Koa from 'koa';
+import bodyParser from 'koa-bodyparser';
+import Router from 'koa-router';
+import koaValidator from '../../src/koa_validator';
 
-var port = process.env.PORT || 8888;
-var app = express();
+const port = process.env.PORT || 8888;
+const app = new Koa();
 
 // If no native implementation of Promise exists (less than Node v4),
 // use Bluebird promises so we can test for both depending on the Node version
@@ -14,13 +15,14 @@ if (typeof Promise === 'undefined') {
 
 module.exports = function(validation) {
 
-  app.set('port', port);
-  app.use(bodyParser.json());
-  app.use(expressValidator({
+  app.use(bodyParser());
+  app.use(koaValidator({
+
     customValidators: {
       isArray: function(value) {
         return Array.isArray(value);
       },
+
       isAsyncTest: function(testparam) {
         return new Promise(function(resolve, reject) {
           setTimeout(function() {
@@ -30,6 +32,7 @@ module.exports = function(validation) {
         });
       }
     },
+
     customSanitizers: {
       toTestSanitize: function() {
         return '!!!!';
@@ -37,9 +40,19 @@ module.exports = function(validation) {
     }
   }));
 
-  app.get(/\/test(\d+)/, validation);
-  app.get('/:testparam?', validation);
-  app.post('/:testparam?', validation);
+  let router = new Router();
+  router
+    .get(/\/test(\d+)/, validation)
+    .get('/:testparam?', validation)
+    .post('/:testparam?', validation);
+
+  app
+    .use(router.routes())
+    .use(router.allowedMethods());
+
+  // app.use(_.get(, validation));
+  // app.use(_.get(, validation));
+  // app.use(_.post('/:testparam?', validation));
 
   return app;
 };

@@ -1,14 +1,13 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
-function validation(req, res) {
-  var body = req.sanitizeBody('testparam').whitelist(['a', 'b', 'c']);
-  var query = req.sanitizeQuery('testparam').whitelist(['a', 'b', 'c']);
-  var params = req.sanitizeParams('testparam').whitelist(['a', 'b', 'c']);
+async function validation(ctx, next) {
+  var body = ctx.sanitizeBody('testparam').whitelist(['a', 'b', 'c']);
+  var query = ctx.sanitizeQuery('testparam').whitelist(['a', 'b', 'c']);
+  var params = ctx.sanitizeParams('testparam').whitelist(['a', 'b', 'c']);
 
-  res.send({ params: params, query: query, body: body });
+  ctx.body = { params: params, query: query, body: body };
 }
 
 function pass(body) {
@@ -31,7 +30,7 @@ function fail(body) {
 }
 
 function getRoute(path, test, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body);
@@ -40,7 +39,7 @@ function getRoute(path, test, done) {
 }
 
 function postRoute(path, data, test, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -53,7 +52,8 @@ function postRoute(path, data, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#sanitizers (check results)', function() {

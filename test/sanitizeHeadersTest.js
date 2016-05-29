@@ -1,12 +1,12 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
-function validation(req, res) {
-  req.sanitizeHeaders('x-custom-header').trim();
-  res.send(req.headers);
+async function validation(ctx, next) {
+  ctx.sanitizeHeaders('x-custom-header').trim();
+  ctx.body = ctx.headers;
 }
+
 
 function pass(body) {
   expect(body).to.have.property('x-custom-header', 'space');
@@ -16,7 +16,7 @@ function fail(body) {
 }
 
 function getRoute(path, data, test, done) {
-  request(app)
+  request
     .get(path)
     .set('x-custom-header', data)
     .end(function(err, res) {
@@ -29,7 +29,8 @@ function getRoute(path, data, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#sanitizeHeaders', function() {

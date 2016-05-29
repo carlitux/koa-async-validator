@@ -1,19 +1,15 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
 var errorMessage = 'Parameter is not an integer';
 
-function validation(req, res) {
-  req.assert('optional_param', errorMessage).optional().isInt();
-  req.assert('optional_falsy_param', errorMessage).optional({ checkFalsy: true }).isInt();
+async function validation(ctx, next) {
+  ctx.assert('optional_param', errorMessage).optional().isInt();
+  ctx.assert('optional_falsy_param', errorMessage).optional({ checkFalsy: true }).isInt();
 
-  var errors = req.validationErrors();
-  if (errors) {
-    return res.send(errors);
-  }
-  res.send({ result: 'OK' });
+  var errors = await ctx.validationErrors();
+  ctx.body = (errors) ? errors : { result: 'OK' }
 }
 
 function fail(body) {
@@ -26,7 +22,7 @@ function pass(body) {
 }
 
 function testRoute(path, test, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body);
@@ -38,7 +34,8 @@ function testRoute(path, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 // TODO: Don't know if all of these are necessary, but we do need to test body and header

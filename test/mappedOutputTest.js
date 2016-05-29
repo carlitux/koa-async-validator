@@ -1,19 +1,20 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
 var errorMessage = 'valid email required';
 
-function validation(req, res) {
-  req.assert('email', 'required').notEmpty();
-  req.assert('email', errorMessage).isEmail();
+async function validation(ctx, next) {
+  ctx.assert('email', 'required').notEmpty();
+  ctx.assert('email', errorMessage).isEmail();
 
-  var errors = req.validationErrors(true);
+  var errors = await ctx.validationErrors(true);
+
   if (errors) {
-    return res.send(errors);
+    ctx.body = errors
+  } else {
+    ctx.body = { email: ctx.params.email || ctx.query.email || ctx.request.body.email }
   }
-  res.send({ email: req.params.email || req.query.email || req.body.email });
 }
 
 function fail(body) {
@@ -25,7 +26,7 @@ function pass(body) {
 }
 
 function testRoute(path, data, test, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -38,7 +39,8 @@ function testRoute(path, data, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#validationErrors(true)', function() {

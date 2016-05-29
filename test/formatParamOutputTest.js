@@ -1,6 +1,6 @@
 var chai = require('chai');
 var expect = chai.expect;
-var formatParamOutput = require('../index').utils.formatParamOutput;
+var formatParamOutput = require('../src/koa_validator').utils.formatParamOutput;
 
 describe('#formatParamOutput()', function() {
   it('should correct return formatted string if all elements in array are strings', function() {

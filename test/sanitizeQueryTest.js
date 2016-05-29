@@ -1,22 +1,23 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
-function validation(req, res) {
-  req.sanitizeQuery('testparam').whitelist(['a', 'b', 'c']);
-  res.send({ query: req.query });
+
+async function validation(ctx, next) {
+  ctx.sanitizeQuery('testparam').whitelist(['a', 'b', 'c']);
+  ctx.body = { query: ctx.query };
 }
 
 function pass(body) {
   expect(body).to.have.deep.property('query.testparam', 'abc');
 }
+
 function fail(body) {
   expect(body).to.not.have.property('query', 'testparam');
 }
 
 function getRoute(path, test, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body);
@@ -25,7 +26,7 @@ function getRoute(path, test, done) {
 }
 
 function postRoute(path, data, test, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -38,7 +39,8 @@ function postRoute(path, data, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('#sanitizeQuery', function() {

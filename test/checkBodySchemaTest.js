@@ -1,13 +1,11 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
 var errorMessage = 'Invalid param';
 
-var app;
-
-function validation(req, res) {
-  req.checkBody({
+async function validation(ctx, next) {
+  ctx.checkBody({
     'testparam': {
       notEmpty: true,
       isInt: true
@@ -17,12 +15,9 @@ function validation(req, res) {
     }
   });
 
-  var errors = req.validationErrors();
-  if (errors) {
-    return res.send(errors);
-  }
+  let errors = await ctx.validationErrors();
 
-  res.send({ testparam: req.body.testparam });
+  ctx.body = (errors) ? errors : { testparam: ctx.request.body.testparam };
 }
 
 function fail(body, length) {
@@ -35,7 +30,7 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request(app)
+  request
     .get(path)
     .end(function(err, res) {
       test(res.body, length);
@@ -44,7 +39,7 @@ function getRoute(path, test, length, done) {
 }
 
 function postRoute(path, data, test, length, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -57,8 +52,10 @@ function postRoute(path, data, test, length, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
+
 
 describe('#checkBodySchema()', function() {
   describe('GET tests', function() {

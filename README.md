@@ -11,30 +11,33 @@ An [koa.js]( https://github.com/koajs/koa ) middleware for
 npm install koa-async-validator --save
 ```
 
-## Todo
+## Important notes
 
-* Update tests
+* If you want to use checkParams you have to user koa-router or any router
+that populates ctx.params.
+* This middleware is for koa 2.
 
 ## Usage
 
 ```javascript
-import util from ('util');
-import Koa from ('koa');
-import koaValidator from ('koa-async-validator');
+import util from 'util';
+import Koa from 'koa';
+import koaValidator from 'koa-async-validator';
 import bodyParser from 'koa-bodyparser';
+import Router from 'koa-router';
 
 const app = new Koa();
+const router = new Router();
 
 app.use(bodyParser());
 app.use(expressValidator([options])); // this line must be immediately after bodyParser()!
 
-
-app.use(asynx (ctx, next) => {
+router.post('/:urlparam', async (ctx, next) => {
 
   // VALIDATION
-  // checkBody only checks req.body; none of the other req parameters
-  // Similarly checkParams only checks in req.params (URL params) and
-  // checkQuery only checks req.query (GET params).
+  // checkBody only checks ctx.request.body; none of the other req parameters
+  // Similarly checkParams only checks in ctx.params (URL params) and
+  // checkQuery only checks ctx.query (GET params).
   ctx.checkBody('postparam', 'Invalid postparam').notEmpty().isInt();
   ctx.checkParams('urlparam', 'Invalid urlparam').isAlpha();
   ctx.checkQuery('getparam', 'Invalid getparam').isInt();
@@ -54,21 +57,25 @@ app.use(asynx (ctx, next) => {
   // OR find the relevent param in all areas
   ctx.sanitize('postparam').toBoolean();
 
-  let errors = await req.validationErrors();
+  let errors = await ctx.validationErrors();
 
   if (errors) {
     ctx.body = `There have been validation errors: ${ util.inspect(errors) }`;
     ctx.status = 400;
   } else {
     ctx.body = {
-      urlparam: req.params.urlparam,
-      getparam: req.params.getparam,
-      postparam: req.params.postparam
+      urlparam: ctx.params.urlparam,
+      getparam: ctx.params.getparam,
+      postparam: ctx.params.postparam
     }
   }
 
   await next();
 });
+
+app
+  .use(router.routes())
+  .use(router.allowedMethods());
 
 app.listen(8888);
 ```
@@ -164,7 +171,7 @@ app.use(koaValidator({
 ```
 Use them with their sanitizer name:
 ```javascript
-req.sanitize('address').toSanitizeSomehow();
+ctx.sanitize('address').toSanitizeSomehow();
 ```
 
 ## Validation
@@ -189,13 +196,13 @@ Alias for [ctx.check()](#reqcheck).
 Alias for [ctx.check()](#reqcheck).
 
 #### ctx.checkBody();
-Same as [ctx.check()](#reqcheck), but only looks in `ctx.req.body`.
+Same as [ctx.check()](#reqcheck), but only looks in `ctx.request.body`.
 
 #### ctx.checkQuery();
-Same as [ctx.check()](#reqcheck), but only looks in `ctx.req.query`.
+Same as [ctx.check()](#reqcheck), but only looks in `ctx.request.query`.
 
 #### ctx.checkParams();
-Same as [ctx.check()](#reqcheck), but only looks in `ctx.req.params`.
+Same as [ctx.check()](#reqcheck), but only looks in `ctx.request.params`.
 
 #### ctx.checkHeaders();
 Only checks `ctx.headers`. This method is not covered by the general `ctx.check()`.
@@ -228,7 +235,7 @@ app.use(koaValidator({
   }
 }));
 
-req.check('username', 'Username Taken').isUsernameAvailable();
+ctx.check('username', 'Username Taken').isUsernameAvailable();
 ```
 
 ## Validation by Schema
@@ -373,22 +380,22 @@ You can use the `optional()` method to skip validation. By default, it only skip
 
 ```javascript
 ctx.checkBody('email').optional().isEmail();
-//if there is no error, req.body.email is either undefined or a valid mail.
+//if there is no error, ctx.request.body.email is either undefined or a valid mail.
 ```
 
 ## Sanitizer
 
-#### req.sanitize();
+#### ctx.sanitize();
 ```javascript
 
-ctx.req.body.comment = 'a <span>comment</span>';
-ctx.req.body.username = '   a user    ';
+ctx.request.body.comment = 'a <span>comment</span>';
+ctx.request.body.username = '   a user    ';
 
 ctx.sanitize('comment').escape(); // returns 'a &lt;span&gt;comment&lt;/span&gt;'
 ctx.sanitize('username').trim(); // returns 'a user'
 
-console.log(ctx.req.body.comment); // 'a &lt;span&gt;comment&lt;/span&gt;'
-console.log(ctx.req.body.username); // 'a user'
+console.log(ctx.request.body.comment); // 'a &lt;span&gt;comment&lt;/span&gt;'
+console.log(ctx.request.body.username); // 'a user'
 
 ```
 
@@ -413,7 +420,6 @@ Same as [ctx.sanitize()](#reqsanitize), but only looks in `ctx.params`.
 #### ctx.sanitizeHeaders();
 Only sanitizes `ctx.headers`. This method is not covered by the general `ctx.sanitize()`.
 
-*This maybe wont be a feature*
 ### Regex routes
 
 Express allows you to define regex routes like:
@@ -425,7 +431,7 @@ app.get(/\/test(\d+)/, function() {});
 You can validate the extracted matches like this:
 
 ```javascript
-req.assert(0, 'Not a three-digit integer.').len(3, 3).isInt();
+ctx.assert(0, 'Not a three-digit integer.').len(3, 3).isInt();
 ```
 
 ## Changelog

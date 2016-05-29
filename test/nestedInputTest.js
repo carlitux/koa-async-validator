@@ -1,20 +1,19 @@
 var chai = require('chai');
 var expect = chai.expect;
-var request = require('supertest');
+var request;
 
-var app;
+async function validation(ctx, next) {
+  ctx.assert(['user', 'fields', 'email'], 'not empty').notEmpty();
+  ctx.assert('user.fields.email', 'not empty').notEmpty();
+  ctx.assert(['user', 'fields', 'email'], 'valid email required').isEmail();
+  ctx.assert(['admins', '0', 'name'], 'must only contain letters').isAlpha();
 
-function validation(req, res) {
-  req.assert(['user', 'fields', 'email'], 'not empty').notEmpty();
-  req.assert('user.fields.email', 'not empty').notEmpty();
-  req.assert(['user', 'fields', 'email'], 'valid email required').isEmail();
-  req.assert(['admins', '0', 'name'], 'must only contain letters').isAlpha();
-
-  var errors = req.validationErrors();
+  var errors = await ctx.validationErrors();
   if (errors) {
-    return res.send(errors);
+    ctx.body = errors;
+  } else {
+    ctx.body = ctx.request.body;
   }
-  res.send(req.body);
 }
 
 function fail(body) {
@@ -34,7 +33,7 @@ function pass(body) {
 }
 
 function testRoute(path, data, test, done) {
-  request(app)
+  request
     .post(path)
     .send(data)
     .end(function(err, res) {
@@ -47,7 +46,8 @@ function testRoute(path, data, test, done) {
 // order to use a new validation function in each file
 before(function() {
   delete require.cache[require.resolve('./helpers/app')];
-  app = require('./helpers/app')(validation);
+  let app = require('./helpers/app')(validation);
+  request = require('supertest-koa-agent')(app);
 });
 
 describe('nested input as array or dot notation', function() {
