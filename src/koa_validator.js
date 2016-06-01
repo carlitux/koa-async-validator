@@ -234,9 +234,6 @@ var koaValidator = function(options) {
       if (ctx._asyncValidationErrors.length > 0) {
         for (let index in ctx._asyncValidationErrors) {
           let error = await ctx._asyncValidationErrors[index]();
-          console.log('+++++++++++++++++++++++++++++++++')
-          console.log(error)
-          console.log('+++++++++++++++++++++++++++++++++')
           if (error) {
             ctx._validationErrors.push(error);
           }
@@ -401,10 +398,6 @@ function makeValidator (methodName, container) {
       let validate = async () => {
         let validated;
         try { validated = await isValid; } catch (e) { validated = false; }
-        console.log('***************************')
-        console.log(validated);
-        console.log(error);
-        console.log('***************************')
         if (!validated) {
           return error
         }
