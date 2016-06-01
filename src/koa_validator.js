@@ -232,6 +232,7 @@ var koaValidator = function(options) {
       if (ctx._asyncValidationErrors.length > 0) {
         for (let index in ctx._asyncValidationErrors) {
           let error = await ctx._asyncValidationErrors[index]();
+	  console.log(error)
           if (error) {
             ctx._validationErrors.push(error);
           }
