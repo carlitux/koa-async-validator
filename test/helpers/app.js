@@ -26,7 +26,7 @@ module.exports = function(validation) {
       isAsyncTest: function(testparam) {
         return new Promise(function(resolve, reject) {
           setTimeout(function() {
-            if (testparam === '42') { return resolve(); }
+            if (testparam === '42') { return resolve(true); }
             reject();
           }, 200);
         });

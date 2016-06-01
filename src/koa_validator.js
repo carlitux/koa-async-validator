@@ -188,12 +188,14 @@ var koaValidator = function(options) {
       if (this.lastError.isAsync) {
         let isValid = this.ctx._asyncValidationErrors.pop();
         let validate = async () => {
+          let validated = false;
           try {
-            await isValid
-          } catch (e) {
-            var error = formatErrors.call(this.lastError.context,
+            validated = await isValid()
+          } catch (e) { }
+
+          if (!validated) {
+            return formatErrors.call(this.lastError.context,
               this.lastError.param, message, this.lastError.value);
-            return error
           }
         };
 
@@ -232,7 +234,9 @@ var koaValidator = function(options) {
       if (ctx._asyncValidationErrors.length > 0) {
         for (let index in ctx._asyncValidationErrors) {
           let error = await ctx._asyncValidationErrors[index]();
-	  console.log(error)
+          console.log('+++++++++++++++++++++++++++++++++')
+          console.log(error)
+          console.log('+++++++++++++++++++++++++++++++++')
           if (error) {
             ctx._validationErrors.push(error);
           }
@@ -395,7 +399,15 @@ function makeValidator (methodName, container) {
 
     if (isValid.then) {
       let validate = async () => {
-        try { await isValid; } catch (e) { return error }
+        let validated;
+        try { validated = await isValid; } catch (e) { validated = false; }
+        console.log('***************************')
+        console.log(validated);
+        console.log(error);
+        console.log('***************************')
+        if (!validated) {
+          return error
+        }
       };
 
       this.lastError = {
