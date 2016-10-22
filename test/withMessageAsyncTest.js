@@ -29,7 +29,7 @@ describe('#withMessage()', function() {
         }
       };
 
-      validator(ctx, {}, function() {});
+      validator(ctx, function() {});
 
       ctx.check('testParam', 'Default Message')
         .test().withMessage('Custom Message');
@@ -63,7 +63,7 @@ describe('#withMessage()', function() {
        }
      };
 
-     validator(ctx, {}, function() {});
+     validator(ctx, function() {});
 
      ctx.check('testParam', 'Default Message')
        .test().withMessage('Custom Message');
@@ -100,7 +100,7 @@ describe('#withMessage()', function() {
        }
      };
 
-     validator(ctx, {}, function() {});
+     validator(ctx, function() {});
 
      ctx.check('testParam', 'Default Message')
        .fail() // Default Message

@@ -14,7 +14,7 @@ async function validation(ctx, next) {
 
 
 function fail(body) {
-  expect(body).to.have.length(2);
+  expect(body).to.have.length(1);
   expect(body[0]).to.have.property('msg', errorMessage);
 }
 
@@ -40,7 +40,7 @@ before(function() {
 });
 
 
-describe('Express routes can be defined using regular expressions', function() {
+describe('Koa routes can be defined using regular expressions', function() {
   it('should return a success when regex route is validated', function(done) {
     testRoute('/test123', pass, done);
   });
