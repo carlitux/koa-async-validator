@@ -30,7 +30,7 @@ const app = new Koa();
 const router = new Router();
 
 app.use(bodyParser());
-app.use(expressValidator([options])); // this line must be immediately after bodyParser()!
+app.use(koaValidator([options])); // this line must be immediately after bodyParser()!
 
 router.post('/:urlparam', async (ctx, next) => {
 
