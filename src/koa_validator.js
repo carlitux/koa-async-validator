@@ -1,7 +1,6 @@
 import validator from 'validator';
 import _ from 'lodash';
 
-
 // When validator upgraded to v5, they removed automatic string coercion
 // The next few methods (up to validator.init()) restores that functionality
 // so that koa-async-validator can continue to function normally
@@ -13,28 +12,34 @@ validator.extend = function(name, fn) {
   };
 };
 
-
 validator.init = function() {
   for (var name in validator) {
-  if (typeof validator[name] !== 'function' || name === 'toString' ||
-    name === 'toDate' || name === 'extend' || name === 'init' ||
-    name === 'isServerSide') {
+    if (
+      typeof validator[name] !== 'function' ||
+      name === 'toString' ||
+      name === 'toDate' ||
+      name === 'extend' ||
+      name === 'init' ||
+      name === 'isServerSide'
+    ) {
       continue;
-  }
-  validator.extend(name, validator[name]);
+    }
+    validator.extend(name, validator[name]);
   }
 };
-
 
 validator.toString = function(input) {
   if (typeof input === 'object' && input !== null && input.toString) {
     input = input.toString();
-  } else if (input === null || typeof input === 'undefined' || (isNaN(input) && !input.length)) {
+  } else if (
+    input === null ||
+    typeof input === 'undefined' ||
+    (isNaN(input) && !input.length)
+  ) {
     input = '';
   }
   return '' + input;
 };
-
 
 validator.toDate = function(date) {
   if (Object.prototype.toString.call(date) === '[object Date]') {
@@ -44,17 +49,20 @@ validator.toDate = function(date) {
   return !isNaN(date) ? new Date(date) : null;
 };
 
-
 validator.init();
-
 
 // validators and sanitizers not prefixed with is/to
 var additionalValidators = ['contains', 'equals', 'matches'];
 var additionalSanitizers = [
-  'trim', 'ltrim', 'rtrim', 'escape', 'stripLow',
-  'whitelist', 'blacklist', 'normalizeEmail'
+  'trim',
+  'ltrim',
+  'rtrim',
+  'escape',
+  'stripLow',
+  'whitelist',
+  'blacklist',
+  'normalizeEmail',
 ];
-
 
 /**
  * Initializes a chain of validators
@@ -68,8 +76,7 @@ var additionalSanitizers = [
  */
 
 class ValidatorChain {
-
-  constructor (param, failMsg, ctx, location, options) {
+  constructor(param, failMsg, ctx, location, options) {
     let context = location === 'body' ? ctx.request[location] : ctx[location];
     this.errorFormatter = options.errorFormatter;
     this.param = param;
@@ -80,9 +87,7 @@ class ValidatorChain {
     this.lastError = null; // used by withMessage to get the values of the last error
     return this;
   }
-
 }
-
 
 /**
  * Initializes a sanitizer
@@ -94,8 +99,7 @@ class ValidatorChain {
  */
 
 class Sanitizer {
-
-  constructor (param, ctx, locations) {
+  constructor(param, ctx, locations) {
     this.values = locations.map(function(location) {
       let context = location === 'body' ? ctx.request[location] : ctx[location];
       return _.get(context, param);
@@ -106,9 +110,7 @@ class Sanitizer {
     this.locations = locations;
     return this;
   }
-
 }
-
 
 /**
  * Adds validation methods to request object via express middleware
@@ -128,31 +130,36 @@ var koaValidator = function(options) {
       return {
         param: param,
         msg: msg,
-        value: value
+        value: value,
       };
-    }
+    },
   };
 
   _.defaults(options, defaults);
 
   // _.set validators and sanitizers as prototype methods on corresponding chains
   _.forEach(validator, function(method, methodName) {
-    if (methodName.match(/^is/) ||
-      _.includes(additionalValidators, methodName)) {
-      ValidatorChain.prototype[methodName] =
-        makeValidator(methodName, validator);
+    if (
+      methodName.match(/^is/) ||
+      _.includes(additionalValidators, methodName)
+    ) {
+      ValidatorChain.prototype[methodName] = makeValidator(
+        methodName,
+        validator,
+      );
     }
 
-    if (methodName.match(/^to/) ||
-      _.includes(additionalSanitizers, methodName)) {
+    if (
+      methodName.match(/^to/) ||
+      _.includes(additionalSanitizers, methodName)
+    ) {
       Sanitizer.prototype[methodName] = makeSanitizer(methodName, validator);
     }
   });
 
-
   ValidatorChain.prototype.notEmpty = function() {
     return this.isLength({
-      min: 1
+      min: 1,
     });
   };
 
@@ -165,7 +172,7 @@ var koaValidator = function(options) {
     // By default, optional checks if the key exists, but the user can pass in
     // checkFalsy: true to skip validation if the property is falsy
     var defaults = {
-      checkFalsy: false
+      checkFalsy: false,
     };
 
     var options = _.assign(defaults, opts);
@@ -190,12 +197,16 @@ var koaValidator = function(options) {
         let validate = async () => {
           let validated = false;
           try {
-            validated = await isValid()
-          } catch (e) { }
+            validated = await isValid();
+          } catch (e) {}
 
           if (!validated) {
-            return formatErrors.call(this.lastError.context,
-              this.lastError.param, message, this.lastError.value);
+            return formatErrors.call(
+              this.lastError.context,
+              this.lastError.param,
+              message,
+              this.lastError.value,
+            );
           }
         };
 
@@ -203,7 +214,12 @@ var koaValidator = function(options) {
       } else {
         this.validationErrors.pop();
         this.ctx._validationErrors.pop();
-        var errorMessage = formatErrors.call(this, this.lastError.param, message, this.lastError.value);
+        var errorMessage = formatErrors.call(
+          this,
+          this.lastError.param,
+          message,
+          this.lastError.value,
+        );
         this.validationErrors.push(errorMessage);
         this.ctx._validationErrors.push(errorMessage);
         this.lastError = null;
@@ -214,15 +230,18 @@ var koaValidator = function(options) {
   };
 
   _.forEach(options.customValidators, function(method, customValidatorName) {
-    ValidatorChain.prototype[customValidatorName] =
-      makeValidator(customValidatorName, options.customValidators);
+    ValidatorChain.prototype[customValidatorName] = makeValidator(
+      customValidatorName,
+      options.customValidators,
+    );
   });
 
   _.forEach(options.customSanitizers, function(method, customSanitizerName) {
-    Sanitizer.prototype[customSanitizerName] =
-      makeSanitizer(customSanitizerName, options.customSanitizers);
+    Sanitizer.prototype[customSanitizerName] = makeSanitizer(
+      customSanitizerName,
+      options.customSanitizers,
+    );
   });
-
 
   return async (ctx, next) => {
     var locations = ['body', 'params', 'query'];
@@ -251,7 +270,6 @@ var koaValidator = function(options) {
 
       return ctx._validationErrors.length > 0 ? ctx._validationErrors : false;
     };
-
 
     locations.forEach(function(location) {
       ctx['sanitize' + _.capitalize(location)] = function(param) {
@@ -296,7 +314,13 @@ var koaValidator = function(options) {
       if (_.isPlainObject(param)) {
         return validateSchema(param, ctx, 'any', options);
       }
-      return new ValidatorChain(param, failMsg, ctx, locate(ctx, param), options);
+      return new ValidatorChain(
+        param,
+        failMsg,
+        ctx,
+        locate(ctx, param),
+        options,
+      );
     };
 
     ctx.filter = ctx.sanitize;
@@ -341,7 +365,6 @@ function validateSchema(schema, ctx, loc, options) {
     currentLoc = loc;
 
   for (let param in schema) {
-
     // check if schema has defined location
     if (schema[param].hasOwnProperty('in')) {
       if (locations.indexOf(schema[param].in) !== -1) {
@@ -366,7 +389,10 @@ function validateSchema(schema, ctx, loc, options) {
         currentLoc = loc;
         continue;
       }
-      validator.failMsg = schema[param][methodName].errorMessage || paramErrorMessage || 'Invalid param';
+      validator.failMsg =
+        schema[param][methodName].errorMessage ||
+        paramErrorMessage ||
+        'Invalid param';
       validator[methodName].apply(validator, schema[param][methodName].options);
     }
   }
@@ -381,8 +407,8 @@ function validateSchema(schema, ctx, loc, options) {
  * @return {function}
  */
 
-function makeValidator (methodName, container) {
-  return function () {
+function makeValidator(methodName, container) {
+  return function() {
     if (this.skipValidating) {
       return this;
     }
@@ -393,14 +419,23 @@ function makeValidator (methodName, container) {
 
     container.ctx = this.ctx;
     var isValid = container[methodName].apply(container, args);
-    var error = formatErrors.call(this, this.param, this.failMsg || 'Invalid value', this.value);
+    var error = formatErrors.call(
+      this,
+      this.param,
+      this.failMsg || 'Invalid value',
+      this.value,
+    );
 
     if (isValid.then) {
       let validate = async () => {
         let validated;
-        try { validated = await isValid; } catch (e) { validated = false; }
+        try {
+          validated = await isValid;
+        } catch (e) {
+          validated = false;
+        }
         if (!validated) {
-          return error
+          return error;
         }
       };
 
@@ -409,7 +444,7 @@ function makeValidator (methodName, container) {
         param: this.param,
         value: this.value,
         context: this,
-        isAsync: true
+        isAsync: true,
       };
 
       this.ctx._asyncValidationErrors.push(validate);
@@ -438,20 +473,23 @@ function makeSanitizer(methodName, container) {
   return function() {
     var _arguments = arguments;
     var result;
-    this.values.forEach(function(value, i) {
-      if (value != null) {
-        var args = [value];
-        args = args.concat(Array.prototype.slice.call(_arguments));
-        result = container[methodName].apply(container, args);
+    this.values.forEach(
+      function(value, i) {
+        if (value != null) {
+          var args = [value];
+          args = args.concat(Array.prototype.slice.call(_arguments));
+          result = container[methodName].apply(container, args);
 
-        let location = this.locations[i] === 'body' ?
-          this.ctx.request[this.locations[i]] :
-          this.ctx[this.locations[i]];
+          let location =
+            this.locations[i] === 'body'
+              ? this.ctx.request[this.locations[i]]
+              : this.ctx[this.locations[i]];
 
-        _.set(location, this.param, result);
-        this.values[i] = result;
-      }
-    }.bind(this));
+          _.set(location, this.param, result);
+          this.values[i] = result;
+        }
+      }.bind(this),
+    );
 
     return result;
   };
@@ -520,5 +558,5 @@ function formatParamOutput(param) {
 module.exports = koaValidator;
 module.exports.validator = validator;
 module.exports.utils = {
-  formatParamOutput: formatParamOutput
+  formatParamOutput: formatParamOutput,
 };

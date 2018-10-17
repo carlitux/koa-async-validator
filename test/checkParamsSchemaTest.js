@@ -13,17 +13,17 @@ var errorMessage = 'Parameter is not an integer';
 
 async function validation(ctx, next) {
   ctx.checkParams({
-    'testparam': {
+    testparam: {
       notEmpty: true,
       isInt: {
-        errorMessage: 'Parameter is not an integer'
-      }
-    }
+        errorMessage: 'Parameter is not an integer',
+      },
+    },
   });
 
   let errors = await ctx.validationErrors();
 
-  ctx.body = (errors) ? errors : { testparam: ctx.params.testparam };
+  ctx.body = errors ? errors : { testparam: ctx.params.testparam };
 }
 
 function fail(body, length) {
@@ -42,12 +42,10 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body, length);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body, length);
+    done();
+  });
 }
 
 function postRoute(path, data, test, length, done) {
@@ -115,16 +113,33 @@ describe('#checkParamsSchema()', function() {
     // POST only
 
     it('should return a success when param validates and unrelated query/body is present', function(done) {
-      postRoute('/42?testparam=blah', { testparam: 'posttest' }, pass, null, done);
+      postRoute(
+        '/42?testparam=blah',
+        { testparam: 'posttest' },
+        pass,
+        null,
+        done,
+      );
     });
 
     it('should return one error when param does not validate as int and unrelated query/body is present', function(done) {
-      postRoute('/test?testparam=blah', { testparam: 'posttest' }, fail, 1, done);
+      postRoute(
+        '/test?testparam=blah',
+        { testparam: 'posttest' },
+        fail,
+        1,
+        done,
+      );
     });
 
     it('should return two errors when param is missing and unrelated query/body is present', function(done) {
-      postRoute('/?testparam=blah', { testparam: 'posttest' }, failMulti, 2, done);
+      postRoute(
+        '/?testparam=blah',
+        { testparam: 'posttest' },
+        failMulti,
+        2,
+        done,
+      );
     });
   });
-
 });

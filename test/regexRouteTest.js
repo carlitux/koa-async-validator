@@ -4,14 +4,15 @@ var request;
 
 var errorMessage = 'Parameter is not a 3 digit integer';
 
-
 async function validation(ctx, next) {
-  ctx.assert(0, errorMessage).len(3, 3).isInt();
+  ctx
+    .assert(0, errorMessage)
+    .len(3, 3)
+    .isInt();
 
   var errors = await ctx.validationErrors();
-  ctx.body = (errors) ? errors : [ctx.params[0]];
+  ctx.body = errors ? errors : [ctx.params[0]];
 }
-
 
 function fail(body) {
   expect(body).to.have.length(1);
@@ -23,12 +24,10 @@ function pass(body) {
 }
 
 function testRoute(path, test, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body);
+    done();
+  });
 }
 
 // This before() is required in each set of tests in
@@ -38,7 +37,6 @@ before(function() {
   let app = require('./helpers/app')(validation);
   request = require('supertest-koa-agent')(app);
 });
-
 
 describe('Koa routes can be defined using regular expressions', function() {
   it('should return a success when regex route is validated', function(done) {

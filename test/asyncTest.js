@@ -12,11 +12,14 @@ var errorMessage = 'Parameter is not 42';
 // parameters will be ignored.
 
 async function validation(ctx, next) {
-  ctx.checkQuery('testparam', errorMessage).notEmpty().isAsyncTest();
+  ctx
+    .checkQuery('testparam', errorMessage)
+    .notEmpty()
+    .isAsyncTest();
 
   let errors = await ctx.validationErrors();
 
-  ctx.body = (errors) ? errors : { testparam: ctx.query.testparam };
+  ctx.body = errors ? errors : { testparam: ctx.query.testparam };
 }
 
 function fail(body, length) {
@@ -29,12 +32,10 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body, length);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body, length);
+    done();
+  });
 }
 
 function postRoute(path, data, test, length, done) {
@@ -94,7 +95,13 @@ describe('#asyncTest()', function() {
     // POST only
 
     it('should return a success when query validates and unrelated param/body is present', function(done) {
-      postRoute('/test?testparam=42', { testparam: 'posttest' }, pass, null, done);
+      postRoute(
+        '/test?testparam=42',
+        { testparam: 'posttest' },
+        pass,
+        null,
+        done,
+      );
     });
 
     it('should return one error when query does not validate as int and unrelated param/body is present', function(done) {
@@ -105,5 +112,4 @@ describe('#asyncTest()', function() {
       postRoute('/', { testparam: '42' }, fail, 2, done);
     });
   });
-
 });

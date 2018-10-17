@@ -2,7 +2,6 @@ var chai = require('chai');
 var expect = chai.expect;
 var request;
 
-
 async function validation(ctx, next) {
   ctx.sanitizeQuery('testparam').whitelist(['a', 'b', 'c']);
   ctx.body = { query: ctx.query };
@@ -17,12 +16,10 @@ function fail(body) {
 }
 
 function getRoute(path, test, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body);
+    done();
+  });
 }
 
 function postRoute(path, data, test, done) {
@@ -51,8 +48,6 @@ describe('#sanitizeQuery', function() {
     it('should not return property when query param is missing', function(done) {
       getRoute('/', fail, done);
     });
-
-
   });
   describe('POST tests', function() {
     it('should return property and sanitized value when query param is present', function(done) {
@@ -62,6 +57,5 @@ describe('#sanitizeQuery', function() {
     it('should not return property when query param is missing', function(done) {
       postRoute('/', null, fail, done);
     });
-
   });
 });

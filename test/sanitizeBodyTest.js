@@ -4,7 +4,7 @@ var request;
 
 async function validation(ctx, next) {
   ctx.sanitizeBody('testparam').whitelist(['a', 'b', 'c']);
-  ctx.body = { body: ctx.request.body }
+  ctx.body = { body: ctx.request.body };
 }
 
 function pass(body) {
@@ -41,6 +41,5 @@ describe('#sanitizeBody', function() {
     it('should not return property when body param is missing', function(done) {
       postRoute('/', null, fail, done);
     });
-
   });
 });

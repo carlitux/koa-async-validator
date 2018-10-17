@@ -12,14 +12,22 @@ var errorMessage = 'Parameter is not an integer';
 // POST params.
 
 async function validation(ctx, next) {
-  ctx.check('testparam', errorMessage).notEmpty().isInt();
+  ctx
+    .check('testparam', errorMessage)
+    .notEmpty()
+    .isInt();
 
   var errors = await ctx.validationErrors();
 
   if (errors) {
     ctx.body = errors;
   } else {
-    ctx.body = { testparam: ctx.params.testparam || ctx.query.testparam || ctx.request.body.testparam };
+    ctx.body = {
+      testparam:
+        ctx.params.testparam ||
+        ctx.query.testparam ||
+        ctx.request.body.testparam,
+    };
   }
 }
 
@@ -33,12 +41,10 @@ function pass(body) {
 }
 
 function getRoute(path, test, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body);
+    done();
+  });
 }
 
 function postRoute(path, data, test, done) {
@@ -123,5 +129,4 @@ describe('#check()/#assert()/#validate()', function() {
       postRoute('/', { testparam: '42' }, pass, done);
     });
   });
-
 });

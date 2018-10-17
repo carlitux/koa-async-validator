@@ -16,43 +16,49 @@ var schema = {
   testparam: {
     in: 'params',
     notEmpty: true,
-      isInt: {
-        errorMessage: errorMsg
-      }
+    isInt: {
+      errorMessage: errorMsg,
+    },
   },
   testquery: {
     in: 'query',
     notEmpty: true,
-      isInt: {
-        options: [{
+    isInt: {
+      options: [
+        {
           min: 2,
-          max: 10
-        }],
-        errorMessage: errorMsgOutOfRange
-      }
+          max: 10,
+        },
+      ],
+      errorMessage: errorMsgOutOfRange,
+    },
   },
-  'skipped': {
+  skipped: {
     // this validator is a fake validator which cannot raise any error, should be always skipped
     in: 'notSupportedOne',
     notEmpty: true,
-      isInt: {
-        options: [{
+    isInt: {
+      options: [
+        {
           min: 2,
-          max: 10
-        }],
-        errorMessage: errorMsgOutOfRange
-      }
+          max: 10,
+        },
+      ],
+      errorMessage: errorMsgOutOfRange,
+    },
   },
-  'numInQuery': {
+  numInQuery: {
     notEmpty: true,
     isInt: {
-      options: [{
-        min: 0,
-        max: 665
-      }],
-      errorMessage: errorMsgOutOfRange
-    }
-  }
+      options: [
+        {
+          min: 0,
+          max: 665,
+        },
+      ],
+      errorMessage: errorMsgOutOfRange,
+    },
+  },
 };
 
 async function validationSendResponse(ctx, next) {
@@ -65,10 +71,9 @@ async function validationSendResponse(ctx, next) {
       testparam: ctx.params.testparam,
       testquery: ctx.query.testquery,
       skipped: ctx.query.skipped,
-      numInQuery: ctx.query.numInQuery
+      numInQuery: ctx.query.numInQuery,
     };
   }
-
 }
 
 async function validation(ctx, next) {
@@ -76,24 +81,20 @@ async function validation(ctx, next) {
   await validationSendResponse(ctx, next);
 }
 
-
 async function validationQuery(ctx, next) {
   ctx.checkQuery(schema);
   await validationSendResponse(ctx, next);
 }
-
 
 async function validationParams(ctx, next) {
   ctx.checkParams(schema);
   await validationSendResponse(ctx, next);
 }
 
-
-async function validationBody (ctx, next) {
+async function validationBody(ctx, next) {
   ctx.checkBody(schema);
   await validationSendResponse(ctx, next);
 }
-
 
 function failParams(body, length) {
   expect(body).to.have.length(length);
@@ -124,18 +125,14 @@ function failQueryParams(params, length) {
   expect(params[1]).to.have.property('msg', errorMsgOutOfRange);
 }
 
-
 function getRoute(path, test, length, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body, length);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body, length);
+    done();
+  });
 }
 
 describe('Check defining validator location inside schema validators', function() {
-
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
   before(function() {
@@ -159,11 +156,9 @@ describe('Check defining validator location inside schema validators', function(
   it('should fail when non of params are valid', function(done) {
     getRoute('/ImNot?testquery=20&skipped=34&numInQuery=0', failAll, 2, done);
   });
-
 });
 
 describe('Check defining validator location inside schema validators by checkQuery()', function() {
-
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
   before(function() {
@@ -179,11 +174,9 @@ describe('Check defining validator location inside schema validators by checkQue
   it('should fail when query param is out of range', function(done) {
     getRoute('/25?testquery=6&skipped=34&numInQuery=666', failQuery, 1, done);
   });
-
 });
 
 describe('Check defining validator location inside schema validators by checkParams()', function() {
-
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
   before(function() {
@@ -193,13 +186,16 @@ describe('Check defining validator location inside schema validators by checkPar
   });
 
   it('should fail when searching for query param in the path params', function(done) {
-    getRoute('/25?testquery=6&skipped=34&numInQuery=666', failQueryParams, 2, done);
+    getRoute(
+      '/25?testquery=6&skipped=34&numInQuery=666',
+      failQueryParams,
+      2,
+      done,
+    );
   });
-
 });
 
 describe('Check defining validator location inside schema validators by checkBody()', function() {
-
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
   before(function() {
@@ -209,7 +205,11 @@ describe('Check defining validator location inside schema validators by checkBod
   });
 
   it('should fail when searching for query param in the body', function(done) {
-    getRoute('/25?testquery=6&skipped=34&numInQuery=666', failQueryParams, 2, done);
+    getRoute(
+      '/25?testquery=6&skipped=34&numInQuery=666',
+      failQueryParams,
+      2,
+      done,
+    );
   });
-
 });

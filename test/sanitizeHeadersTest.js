@@ -7,12 +7,13 @@ async function validation(ctx, next) {
   ctx.body = ctx.headers;
 }
 
-
 function pass(body) {
   expect(body).to.have.property('x-custom-header', 'space');
 }
 function fail(body) {
-  expect(body).to.have.property('x-custom-header').and.to.not.equal('space');
+  expect(body)
+    .to.have.property('x-custom-header')
+    .and.to.not.equal('space');
 }
 
 function getRoute(path, data, test, done) {

@@ -2,7 +2,6 @@ var chai = require('chai');
 var expect = chai.expect;
 var request;
 
-
 async function validation(ctx, next) {
   ctx.sanitize(['user', 'fields', 'email']).trim();
   ctx.body = ctx.request.body;
@@ -32,10 +31,13 @@ before(function() {
 
 describe('#nestedInputSanitizers', function() {
   describe('POST tests', function() {
-
     it('should return property and sanitized value', function(done) {
-      postRoute('/', { user: { fields: { email: '     test@example.com       ' } } }, pass, done);
+      postRoute(
+        '/',
+        { user: { fields: { email: '     test@example.com       ' } } },
+        pass,
+        done,
+      );
     });
-
   });
 });

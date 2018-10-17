@@ -1,6 +1,27 @@
 ## Change Log
 
-### upcoming 2016/05/29
+### upcoming 2018/10/17
+- [4105792](https://github.com/carlitux/koa-async-validator/commit/410579275409470fca2d65226e606da24331bec0) Use prettier to format code (@carlitux)
+- [5be2d15](https://github.com/carlitux/koa-async-validator/commit/5be2d1581484b63d4871efe569c8b656434b29e8) More version of node to test (@carlitux)
+- [2fb3086](https://github.com/carlitux/koa-async-validator/commit/2fb3086227e0d2d7e2b95af4f7c17e4d56a86470) Set ctx into container to access in custom validators (@carlitux)
+- [854608e](https://github.com/carlitux/koa-async-validator/commit/854608e85cf659b9ae1116bdad2bc10a7b2b0bc6) Fix readme (@carlitux)
+- [41bf3b6](https://github.com/carlitux/koa-async-validator/commit/41bf3b63b416f84fb562292cd2b4b516fb323d3d) Update libraries (@carlitux)
+- [d5dcfa6](https://github.com/carlitux/koa-async-validator/commit/d5dcfa6f94b90fcadd0d62e314879722f8ef48b8) Remove logs (@carlitux)
+- [ec9d8e5](https://github.com/carlitux/koa-async-validator/commit/ec9d8e5577bd681efa6cc4793fb0da6afb405359) Fix async validation to use async functions (@carlitux)
+- [9bb3027](https://github.com/carlitux/koa-async-validator/commit/9bb30273603d0d19ca19d3866efd83568457fb5d) Log on validations (@carlitux)
+- [8bf4332](https://github.com/carlitux/koa-async-validator/commit/8bf433280c76b158fde2e342add861ad2cf7cdb4) Remove test on 0.12 (@carlitux)
+- [366bc6d](https://github.com/carlitux/koa-async-validator/commit/366bc6dfbead380f6acad813b91c6ddfe0e11046) Add bluebird for testing (@carlitux)
+- [3dfc5b3](https://github.com/carlitux/koa-async-validator/commit/3dfc5b3fb55fa85cf5aa1abb5f9ff0ffa6319591) Update version (@carlitux)
+- [d761ff4](https://github.com/carlitux/koa-async-validator/commit/d761ff4cc3ec0794c1779476f66251780cf0511a) Add regenerator missed dependency on babel and add test for another node versions (@carlitux)
+- [753ae9f](https://github.com/carlitux/koa-async-validator/commit/753ae9f5548be32ea880add4c37b3e9271eb5e96) Remove babel polyfill and test on node 5.* and 6.0* (@carlitux)
+- [3d49264](https://github.com/carlitux/koa-async-validator/commit/3d49264a560c1d70be6d462a5a78861b9d46fa30) package.json (@carlitux)
+- [043d72b](https://github.com/carlitux/koa-async-validator/commit/043d72b0f692f9a4c3838c57cfa560b7e663a7ac) Add polyfill for some versions of node (@carlitux)
+- [d9fc034](https://github.com/carlitux/koa-async-validator/commit/d9fc034d06e9519d13142d88cc71faa38d89d6b1) Add babel-runtime to the dependency (@carlitux)
+- [0fdaf3e](https://github.com/carlitux/koa-async-validator/commit/0fdaf3ed66db442d4820d7b11760a6043fe63f4a) Add dev dependencies to build on travis (@carlitux)
+- [d8d29ef](https://github.com/carlitux/koa-async-validator/commit/d8d29efa405e768e32f77769f9f90336d46aab16) Add dev dependencies to build on travis (@carlitux)
+- [e3c9a46](https://github.com/carlitux/koa-async-validator/commit/e3c9a4655df9853db7b8f8f6c0b3af4a7855561c) Add dev dependencies to build on travis (@carlitux)
+- [1f74bbd](https://github.com/carlitux/koa-async-validator/commit/1f74bbdd5edd5a4637cb3fad213d00712d6aeb92) Add eslint to dependency (@carlitux)
+- [cd9583d](https://github.com/carlitux/koa-async-validator/commit/cd9583d4a40dcaf8f269950a1c0f0dc67773545b) Add eslint to dependency (@carlitux)
 - [453f500](https://github.com/carlitux/koa-async-validator/commit/453f500a4a836b024d561492001e7b15f7ba267f) full features migrated from express validator (@carlitux)
 - [108b224](https://github.com/carlitux/koa-async-validator/commit/108b2243dbb731ecf4ffd43559bd4762b1dd3669) full features migrated from express validator (@carlitux)
 - [a8f4a7c](https://github.com/carlitux/koa-async-validator/commit/a8f4a7c2dbee179b2b369b8b4a31d38c1bb817e2) Log results (@carlitux)
@@ -33,17 +54,17 @@
 - [c704a22](https://github.com/carlitux/koa-async-validator/commit/c704a2203f430dacff765e83862e36e1cc45471d) Upgrade to 2.19.2 (@rustybailey)
 - [9b74fb4](https://github.com/carlitux/koa-async-validator/commit/9b74fb4ffd4edce7268b9d1e9303829cdb8ae14e) Fix matches example in README (resolves #209) (@rustybailey)
 - [20f033a](https://github.com/carlitux/koa-async-validator/commit/20f033a9f6a7ba6ad1f3d9eb6c34e8e804071d0a) Added missing require that broke build of tests on node v0.10.43
-- [981239f](https://github.com/carlitux/koa-async-validator/commit/981239fd7d7841b2c862c28e1d3f92836f52dcaa) Readme and tests updated after review.
+- [981239f](https://github.com/carlitux/koa-async-validator/commit/981239fd7d7841b2c862c28e1d3f92836f52dcaa) Readme and tests updated after review. (@JaniszM)
 - [f6f88bc](https://github.com/carlitux/koa-async-validator/commit/f6f88bcfd69179f2fdae87c02903bc04eba92029) #203 - Fixed bug where .withMessage() would not apply to a custom async validator (@chrissinclair)
-- [4fdc7a9](https://github.com/carlitux/koa-async-validator/commit/4fdc7a9a711485e792886accdc9160725ad67d9b) Extended test schema to check if not supported location type force validator to skip.
-- [d1894e8](https://github.com/carlitux/koa-async-validator/commit/d1894e88a15f5a135aaf6090e9a771eff0bbee48) Formatter updated.
-- [d87a4f1](https://github.com/carlitux/koa-async-validator/commit/d87a4f1a06b98ef466513decec6428fef3d3c6d6) Readme updated.
-- [a300751](https://github.com/carlitux/koa-async-validator/commit/a30075162b721c5cdb3c2dee196704aab3d30f5b) Issue #206. Added support for new field in validators structure allowing to define location of validation.
+- [4fdc7a9](https://github.com/carlitux/koa-async-validator/commit/4fdc7a9a711485e792886accdc9160725ad67d9b) Extended test schema to check if not supported location type force validator to skip. (@JaniszM)
+- [d1894e8](https://github.com/carlitux/koa-async-validator/commit/d1894e88a15f5a135aaf6090e9a771eff0bbee48) Formatter updated. (@JaniszM)
+- [d87a4f1](https://github.com/carlitux/koa-async-validator/commit/d87a4f1a06b98ef466513decec6428fef3d3c6d6) Readme updated. (@JaniszM)
+- [a300751](https://github.com/carlitux/koa-async-validator/commit/a30075162b721c5cdb3c2dee196704aab3d30f5b) Issue #206. Added support for new field in validators structure allowing to define location of validation. (@JaniszM)
 - [f3ed152](https://github.com/carlitux/koa-async-validator/commit/f3ed152ef28bcc49d7c67c3842fb1ff1bb2067ed) 2.19.1 (@rustybailey)
 - [64d34f7](https://github.com/carlitux/koa-async-validator/commit/64d34f736b2b0d0880a5ca0c55fff8296422cf73) Update package.json (@timoruppell)
 - [55ad066](https://github.com/carlitux/koa-async-validator/commit/55ad06654b65ffd2d7ecdc7f33de80b6856f7340) Change lodash method names to match 4.x changes (@timoruppell)
 - [479dc71](https://github.com/carlitux/koa-async-validator/commit/479dc71c78e73d0e525b8111c7672c524564b60e) 2.19.0 (@rustybailey)
-- [460e11c](https://github.com/carlitux/koa-async-validator/commit/460e11c6df1210d66abd96cd3d2593c429528edf) Upgrade dependency (validator.js) from 4.2.x -> 4.5.x (@aristidesfl)
+- [460e11c](https://github.com/carlitux/koa-async-validator/commit/460e11c6df1210d66abd96cd3d2593c429528edf) Upgrade dependency (validator.js) from 4.2.x -> 4.5.x (@franciscolourenco)
 - [8a2cb3b](https://github.com/carlitux/koa-async-validator/commit/8a2cb3bd75fadb49cb861e08d2f5c3db1d9693bf) Upgrade to 2.18.0 (@rustybailey)
 - [4c9359f](https://github.com/carlitux/koa-async-validator/commit/4c9359f3062241535991bad6411f3ed2a658bff7) Fix #177: Add sanitizeHeaders with tests and docs. (@rustybailey)
 - [3e636f3](https://github.com/carlitux/koa-async-validator/commit/3e636f36a84d0defd7d644b1ef5d697811755be5) Fix #120: Add an options object to optional() so that you can test for falsy values. (@rustybailey)
@@ -121,7 +142,7 @@
 - [d8ba047](https://github.com/carlitux/koa-async-validator/commit/d8ba0470d85e283e38870db5f9a0cde964561171) replaced req.param call to remove deprecation msg (@janza)
 - [b2f727b](https://github.com/carlitux/koa-async-validator/commit/b2f727b4d948cd7a94c6c3570fba5de5f626dc34) Add LICENSE (@becausehama)
 - [e49ee9d](https://github.com/carlitux/koa-async-validator/commit/e49ee9ddb7cf3ebf804874f1ba5281f890693799) Bump version to 2.8.0 (@ctavan)
-- [d48d248](https://github.com/carlitux/koa-async-validator/commit/d48d2480f992ffbe7cac5fe00e3d75f146e5290a) Updating to validator 3.26.0 (@aredo)
+- [d48d248](https://github.com/carlitux/koa-async-validator/commit/d48d2480f992ffbe7cac5fe00e3d75f146e5290a) Updating to validator 3.26.0 (@hengkiardo)
 - [84937cf](https://github.com/carlitux/koa-async-validator/commit/84937cf4dee304914f763d109a657bf24c61914c) Bump version 2.7.0 (@ctavan)
 - [51e39b3](https://github.com/carlitux/koa-async-validator/commit/51e39b3526a0386ab1003b6485a8351567959388) Updating to validator 3.22.1 (@nfrasser)
 - [8b67263](https://github.com/carlitux/koa-async-validator/commit/8b67263c1fcf31b920e369fcb1e7a47a0eef07c6) Upgraded to validator 3.19.0 (@fiznool)
@@ -191,8 +212,8 @@
 - [a37b8d7](https://github.com/carlitux/koa-async-validator/commit/a37b8d7d1db41673ef76755178be3fa4335aac56) Added myself to the contributers. (@arb)
 - [7bf7729](https://github.com/carlitux/koa-async-validator/commit/7bf77296a00469e9d4de7941cb8968e955da13fd) Style change. (@arb)
 - [7cb9113](https://github.com/carlitux/koa-async-validator/commit/7cb9113bec43e28c3ec1f78a2a3e20d763da6f3b) Added check body function to validate only the request body. (@arb)
-- [69fdeed](https://github.com/carlitux/koa-async-validator/commit/69fdeed8e82681ee03d9ba347a9b180ee17dade5) Sorry, was moving this around without updating. (@Prinzhorn)
-- [9ae9e6b](https://github.com/carlitux/koa-async-validator/commit/9ae9e6be816f8550667ed6a4f3e595d1204f4a43) Updated the documentation about extending. (@Prinzhorn)
+- [69fdeed](https://github.com/carlitux/koa-async-validator/commit/69fdeed8e82681ee03d9ba347a9b180ee17dade5) Sorry, was moving this around without updating.
+- [9ae9e6b](https://github.com/carlitux/koa-async-validator/commit/9ae9e6be816f8550667ed6a4f3e595d1204f4a43) Updated the documentation about extending.
 - [3c1c52c](https://github.com/carlitux/koa-async-validator/commit/3c1c52c7a10fd79b42814c3c6c28ecece9f6dd71) Bump version to 0.3.2 (@ctavan)
 - [4ff8a48](https://github.com/carlitux/koa-async-validator/commit/4ff8a4879aa303ea9ef5f98760eb730a48a184f3) Upgrade validator dependency to 0.4.25. Fixes #25. (@ctavan)
 - [48f90b7](https://github.com/carlitux/koa-async-validator/commit/48f90b7922a12fbfbef8bc10bcf98a913dd043ad) Bump version to 0.3.1 (@ctavan)

@@ -11,9 +11,11 @@ async function validation(ctx, next) {
   var errors = await ctx.validationErrors(true);
 
   if (errors) {
-    ctx.body = errors
+    ctx.body = errors;
   } else {
-    ctx.body = { email: ctx.params.email || ctx.query.email || ctx.request.body.email }
+    ctx.body = {
+      email: ctx.params.email || ctx.query.email || ctx.request.body.email,
+    };
   }
 }
 

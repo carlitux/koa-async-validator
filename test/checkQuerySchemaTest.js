@@ -13,16 +13,16 @@ var errorMessage = 'Parameter is not valid';
 
 async function validation(ctx, next) {
   ctx.checkQuery({
-    'testparam': {
+    testparam: {
       notEmpty: true,
       errorMessage: errorMessage,
-      isInt: true
-    }
+      isInt: true,
+    },
   });
 
   let errors = await ctx.validationErrors();
 
-  ctx.body = (errors) ? errors : { testparam: ctx.query.testparam };
+  ctx.body = errors ? errors : { testparam: ctx.query.testparam };
 }
 
 function fail(body, length) {
@@ -41,12 +41,10 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body, length);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body, length);
+    done();
+  });
 }
 
 function postRoute(path, data, test, length, done) {
@@ -106,7 +104,13 @@ describe('#checkQuerySchema()', function() {
     // POST only
 
     it('should return a success when query validates and unrelated param/body is present', function(done) {
-      postRoute('/test?testparam=42', { testparam: 'posttest' }, pass, null, done);
+      postRoute(
+        '/test?testparam=42',
+        { testparam: 'posttest' },
+        pass,
+        null,
+        done,
+      );
     });
 
     it('should return one error when query does not validate as int and unrelated param/body is present', function(done) {
@@ -117,5 +121,4 @@ describe('#checkQuerySchema()', function() {
       postRoute('/', { testparam: '42' }, failMulti, 2, done);
     });
   });
-
 });

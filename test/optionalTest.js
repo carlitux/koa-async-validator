@@ -5,11 +5,17 @@ var request;
 var errorMessage = 'Parameter is not an integer';
 
 async function validation(ctx, next) {
-  ctx.assert('optional_param', errorMessage).optional().isInt();
-  ctx.assert('optional_falsy_param', errorMessage).optional({ checkFalsy: true }).isInt();
+  ctx
+    .assert('optional_param', errorMessage)
+    .optional()
+    .isInt();
+  ctx
+    .assert('optional_falsy_param', errorMessage)
+    .optional({ checkFalsy: true })
+    .isInt();
 
   var errors = await ctx.validationErrors();
-  ctx.body = (errors) ? errors : { result: 'OK' }
+  ctx.body = errors ? errors : { result: 'OK' };
 }
 
 function fail(body) {
@@ -22,12 +28,10 @@ function pass(body) {
 }
 
 function testRoute(path, test, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body);
+    done();
+  });
 }
 
 // This before() is required in each set of tests in

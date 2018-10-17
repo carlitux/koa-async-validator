@@ -2,10 +2,12 @@ var chai = require('chai');
 var expect = chai.expect;
 var request;
 
-
 async function validation(ctx, next) {
   ctx.sanitize('testparam').toTestSanitize();
-  ctx.body = { testparam: ctx.params.testparam || ctx.query.testparam || ctx.request.body.testparam };
+  ctx.body = {
+    testparam:
+      ctx.params.testparam || ctx.query.testparam || ctx.request.body.testparam,
+  };
 }
 
 function pass(body) {
@@ -17,12 +19,10 @@ function fail(body) {
 }
 
 function getRoute(path, test, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body);
+    done();
+  });
 }
 
 function postRoute(path, data, test, done) {
@@ -55,13 +55,11 @@ describe('#customSanitizers', function() {
     it('should return property and sanitized value when query and param is present', function(done) {
       getRoute('/42?testparam=42', pass, done);
     });
-
   });
   describe('POST tests', function() {
     it('should return property and sanitized value when param is present', function(done) {
       postRoute('/valA', null, pass, done);
     });
-
 
     it('should return property and sanitized value when body, param and query is present', function(done) {
       postRoute('/vaA?testparam=gettest', { testparam: '42' }, pass, done);
@@ -70,6 +68,5 @@ describe('#customSanitizers', function() {
     it('should return property and sanitized value when body is present', function(done) {
       postRoute('/', { testparam: '42' }, pass, done);
     });
-
   });
 });

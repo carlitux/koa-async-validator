@@ -12,12 +12,15 @@ var errorMessage = 'Parameter is not an integer';
 // parameters will be ignored.
 
 async function validation(ctx, next) {
-  ctx.checkBody('testparam', errorMessage).notEmpty().isInt();
+  ctx
+    .checkBody('testparam', errorMessage)
+    .notEmpty()
+    .isInt();
   ctx.checkBody('arrayParam').isArray();
 
   let errors = await ctx.validationErrors();
 
-  ctx.body = (errors) ? errors : { testparam: ctx.request.body.testparam };
+  ctx.body = errors ? errors : { testparam: ctx.request.body.testparam };
 }
 
 function fail(body, length) {
@@ -30,12 +33,10 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body, length);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body, length);
+    done();
+  });
 }
 
 function postRoute(path, data, test, length, done) {
@@ -91,15 +92,33 @@ describe('#checkBody()', function() {
     });
 
     it('should return a success when params validate on the body', function(done) {
-      postRoute('/?testparam=blah', { testparam: '42', arrayParam: [1, 2, 3] }, pass, null, done);
+      postRoute(
+        '/?testparam=blah',
+        { testparam: '42', arrayParam: [1, 2, 3] },
+        pass,
+        null,
+        done,
+      );
     });
 
     it('should return two errors when two params are present, but do not validate', function(done) {
-      postRoute('/?testparam=42', { testparam: 'posttest', arrayParam: 123 }, fail, 2, done);
+      postRoute(
+        '/?testparam=42',
+        { testparam: 'posttest', arrayParam: 123 },
+        fail,
+        2,
+        done,
+      );
     });
 
     it('should return two errors when two params are present, but do not validate', function(done) {
-      postRoute('/?testparam=42', { testparam: 'posttest', arrayParam: {} }, fail, 2, done);
+      postRoute(
+        '/?testparam=42',
+        { testparam: 'posttest', arrayParam: {} },
+        fail,
+        2,
+        done,
+      );
     });
 
     it('should return two errors when two params are present, but do not validate', function(done) {
@@ -110,5 +129,4 @@ describe('#checkBody()', function() {
       postRoute('/', { testparam: '42', arrayParam: [] }, pass, null, done);
     });
   });
-
 });

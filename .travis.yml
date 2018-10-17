@@ -3,9 +3,9 @@ language: node_js
 node_js:
   - "10"
   - "8"
-  - "6"
-  - "4"
 install:
   - npm install
 script:
-  - npm run travis-build
+  - npm run test
+  - npm run eslint
+  - npm run build

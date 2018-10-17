@@ -34,7 +34,6 @@ function pass(body) {
   if (body.body.hasOwnProperty('falsetest')) {
     expect(body.body).to.have.property('falsetest', 'false');
   }
-
 }
 
 function fail(body) {
@@ -43,12 +42,10 @@ function fail(body) {
 }
 
 function getRoute(path, test, done) {
-  request
-    .get(path)
-    .end(function(err, res) {
-      test(res.body);
-      done();
-    });
+  request.get(path).end(function(err, res) {
+    test(res.body);
+    done();
+  });
 }
 
 function postRoute(path, data, test, done) {
@@ -81,7 +78,6 @@ describe('#sanitizers', function() {
     it('should return both query and param and sanitized values when they are both present', function(done) {
       getRoute('/abcdef?testparam=abcdef', pass, done);
     });
-
   });
   describe('POST tests', function() {
     it('should return property and sanitized value when param is present', function(done) {
@@ -89,7 +85,12 @@ describe('#sanitizers', function() {
     });
 
     it('should return both query and param and sanitized values when they are both present', function(done) {
-      postRoute('/abcdef?testparam=abcdef', { testparam: '    abcdef     ' }, pass, done);
+      postRoute(
+        '/abcdef?testparam=abcdef',
+        { testparam: '    abcdef     ' },
+        pass,
+        done,
+      );
     });
 
     it('should return property and sanitized value when body is present', function(done) {
@@ -97,8 +98,17 @@ describe('#sanitizers', function() {
     });
 
     it('should return properly sanitized values even if the original value is falsy, but not null/undefined', function(done) {
-      postRoute('/', { testparam: '     abcdef     ', zerotest: 0, emptystrtest: '', falsetest: false }, pass, done);
+      postRoute(
+        '/',
+        {
+          testparam: '     abcdef     ',
+          zerotest: 0,
+          emptystrtest: '',
+          falsetest: false,
+        },
+        pass,
+        done,
+      );
     });
-
   });
 });
