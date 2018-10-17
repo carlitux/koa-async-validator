@@ -391,6 +391,7 @@ function makeValidator (methodName, container) {
     args.push(this.value);
     args = args.concat(Array.prototype.slice.call(arguments));
 
+    container.ctx = this.ctx;
     var isValid = container[methodName].apply(container, args);
     var error = formatErrors.call(this, this.param, this.failMsg || 'Invalid value', this.value);
 

@@ -8,7 +8,7 @@ async function validation(ctx, next) {
 }
 
 function pass(body) {
-  expect(body).to.have.deep.property('body.testparam', 'abc');
+  expect(body.body).to.have.deep.property('testparam', 'abc');
 }
 function fail(body) {
   expect(body).to.not.have.property('body', 'testparam');

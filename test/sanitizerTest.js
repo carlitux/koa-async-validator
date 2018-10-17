@@ -12,27 +12,27 @@ async function validation(ctx, next) {
 
 function pass(body) {
   if (Object.keys(body.params).length) {
-    expect(body).to.have.deep.property('params.testparam', 'abc');
+    expect(body.params).to.have.property('testparam', 'abc');
   }
 
   if (Object.keys(body.query).length) {
-    expect(body).to.have.deep.property('query.testparam', 'abc');
+    expect(body.query).to.have.property('testparam', 'abc');
   }
 
   if (Object.keys(body.body).length) {
-    expect(body).to.have.deep.property('body.testparam', 'abc');
+    expect(body.body).to.have.property('testparam', 'abc');
   }
 
   if (body.body.hasOwnProperty('zerotest')) {
-    expect(body).to.have.deep.property('body.zerotest', '0');
+    expect(body.body).to.have.property('zerotest', '0');
   }
 
   if (body.body.hasOwnProperty('emptystrtest')) {
-    expect(body).to.have.deep.property('body.emptystrtest', false);
+    expect(body.body).to.have.property('emptystrtest', false);
   }
 
   if (body.body.hasOwnProperty('falsetest')) {
-    expect(body).to.have.deep.property('body.falsetest', 'false');
+    expect(body.body).to.have.property('falsetest', 'false');
   }
 
 }
@@ -96,7 +96,7 @@ describe('#sanitizers', function() {
       postRoute('/', { testparam: '     abcdef     ' }, pass, done);
     });
 
-    it('should return properly sanitized values even if the original value is falsey, but not null/undefined', function(done) {
+    it('should return properly sanitized values even if the original value is falsy, but not null/undefined', function(done) {
       postRoute('/', { testparam: '     abcdef     ', zerotest: 0, emptystrtest: '', falsetest: false }, pass, done);
     });
 

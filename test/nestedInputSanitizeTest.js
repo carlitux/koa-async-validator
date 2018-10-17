@@ -9,7 +9,7 @@ async function validation(ctx, next) {
 }
 
 function pass(body) {
-  expect(body).to.have.deep.property('user.fields.email', 'test@example.com');
+  expect(body).to.have.nested.property('user.fields.email', 'test@example.com');
 }
 
 function postRoute(path, data, test, done) {

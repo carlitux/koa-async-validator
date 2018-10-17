@@ -9,7 +9,7 @@ async function validation(ctx, next) {
 }
 
 function pass(body) {
-  expect(body).to.have.deep.property('query.testparam', 'abc');
+  expect(body.query).to.have.deep.property('testparam', 'abc');
 }
 
 function fail(body) {

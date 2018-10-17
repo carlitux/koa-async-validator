@@ -18,7 +18,7 @@ async function validation(ctx, next) {
 }
 
 function fail(body) {
-  expect(body).to.have.deep.property('email.msg', errorMessage);
+  expect(body.email).to.have.deep.property('msg', errorMessage);
 }
 
 function pass(body) {
