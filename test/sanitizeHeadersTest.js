@@ -1,8 +1,9 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-async function validation(ctx, next) {
+const { expect } = chai;
+let request;
+
+async function validation(ctx) {
   ctx.sanitizeHeaders('x-custom-header').trim();
   ctx.body = ctx.headers;
 }
@@ -20,7 +21,7 @@ function getRoute(path, data, test, done) {
   request
     .get(path)
     .set('x-custom-header', data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body);
       done();
     });
@@ -28,19 +29,19 @@ function getRoute(path, data, test, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#sanitizeHeaders', function() {
-  describe('GET tests', function() {
-    it('should return property and sanitized value when headers param is present', function(done) {
+describe('#sanitizeHeaders', () => {
+  describe('GET tests', () => {
+    it('should return property and sanitized value when headers param is present', done => {
       getRoute('/', 'space   ', pass, done);
     });
 
-    it('should not return property when headers param is missing', function(done) {
+    it('should not return property when headers param is missing', done => {
       getRoute('/', null, fail, done);
     });
   });

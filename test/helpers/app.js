@@ -4,45 +4,39 @@ import bodyParser from 'koa-bodyparser';
 import Router from 'koa-router';
 import koaValidator from '../../src/koa_validator';
 
-const port = process.env.PORT || 8888;
 const app = new Koa();
 
-// If no native implementation of Promise exists (less than Node v4),
-// use Bluebird promises so we can test for both depending on the Node version
-if (typeof Promise === 'undefined') {
-  Promise = require('bluebird');
-}
-
-module.exports = function(validation) {
+module.exports = validation => {
   app.use(bodyParser());
   app.use(
     koaValidator({
       customValidators: {
-        isArray: function(value) {
+        isArray(value) {
           return Array.isArray(value);
         },
 
-        isAsyncTest: function(testparam) {
-          return new Promise(function(resolve, reject) {
-            setTimeout(function() {
+        isAsyncTest(testparam) {
+          return new Promise(resolve => {
+            setTimeout(() => {
               if (testparam === '42') {
-                return resolve(true);
+                resolve(true);
+              } else {
+                resolve(false);
               }
-              reject();
             }, 200);
           });
         },
       },
 
       customSanitizers: {
-        toTestSanitize: function() {
+        toTestSanitize() {
           return '!!!!';
         },
       },
     }),
   );
 
-  let router = new Router();
+  const router = new Router();
   router
     .get(/\/test(\d+)/, validation)
     .get('/:testparam?', validation)

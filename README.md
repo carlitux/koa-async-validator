@@ -128,10 +128,14 @@ app.use(koaValidator({
 ```
 
 ####`customValidators`
-_{ "validatorName": function(value, [additional arguments]), ... }_
+_{ "validatorName": function(value, [additional arguments], ctx), ... }_
 
 
 The `customValidators` option can be used to add additional validation methods as needed. This option should be an `Object` defining the validator names and associated validation functions.
+
+Param *value* will be sent as is, won't be stringfied.
+
+For customValidators the last argument it is always is koa ctx apart from options.
 
 Define your custom validators:
 
@@ -211,9 +215,9 @@ Only checks `ctx.headers`. This method is not covered by the general `ctx.check(
 
 If you need to perform asynchronous validation, for example checking a database if a username has been taken already, your custom validator can return a promise or the customValidators should be async functions.
 
-If you are using a promise you have to resolve with a boolean to know if is valid or not and reject is used as not valid.
+If you are using a promise you have to resolve with a boolean to know if is valid.
 
-If you are using async you need to return a boolean to know if valid or not and if throw an error should be used as not valid.
+If you are using async you need to return a boolean to know if valid or not.
 
  ```javascript
 app.use(koaValidator({

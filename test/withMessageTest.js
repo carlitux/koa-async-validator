@@ -1,12 +1,13 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-var errorMessage = 'Default error message';
-var mustBeTwoDigitsMessage = 'testparam must have two digits';
-var mustBeIntegerMessage = 'testparam must be an integer';
+const { expect } = chai;
+let request;
 
-async function validation(ctx, next) {
+const errorMessage = 'Default error message';
+const mustBeTwoDigitsMessage = 'testparam must have two digits';
+const mustBeIntegerMessage = 'testparam must be an integer';
+
+async function validation(ctx) {
   ctx
     .checkParams('testparam', errorMessage)
     .notEmpty() // with default message
@@ -15,22 +16,22 @@ async function validation(ctx, next) {
     .isInt() // with default message
     .isLength({ min: 2, max: 2 })
     .withMessage(mustBeTwoDigitsMessage);
-  var errors = await ctx.validationErrors();
+  const errors = await ctx.validationErrors();
 
-  ctx.body = errors ? errors : { testparam: ctx.params.testparam };
+  ctx.body = errors || { testparam: ctx.params.testparam };
 }
 
 function fail(expectedMessage) {
   if (Array.isArray(expectedMessage)) {
-    return function(body, length) {
+    return (body, length) => {
       expect(body).to.have.length(length);
       expect(expectedMessage).to.have.length(length);
-      for (var i = 0; i < length; ++i) {
+      for (let i = 0; i < length; i += 1) {
         expect(body[i]).to.have.property('msg', expectedMessage[i]);
       }
     };
   }
-  return function(body, length) {
+  return (body, length) => {
     expect(body).to.have.length(length);
     expect(body[0]).to.have.property('msg', expectedMessage);
   };
@@ -41,7 +42,7 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request.get(path).end(function(err, res) {
+  request.get(path).end((err, res) => {
     test(res.body, length);
     done();
   });
@@ -49,14 +50,14 @@ function getRoute(path, test, length, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#withMessage()', function() {
-  it('should return one error per validation failure, with custom message where defined', function(done) {
+describe('#withMessage()', () => {
+  it('should return one error per validation failure, with custom message where defined', done => {
     getRoute(
       '/test',
       fail([mustBeIntegerMessage, errorMessage, mustBeTwoDigitsMessage]),
@@ -65,7 +66,7 @@ describe('#withMessage()', function() {
     );
   });
 
-  it('should return four errors when param is missing, with default message for the first and third errors, and custom messages for the rest, as defined', function(done) {
+  it('should return four errors when param is missing, with default message for the first and third errors, and custom messages for the rest, as defined', done => {
     getRoute(
       '/',
       fail([
@@ -79,17 +80,17 @@ describe('#withMessage()', function() {
     );
   });
 
-  it('should return a success when param validates', function(done) {
+  it('should return a success when param validates', done => {
     getRoute('/42', pass, null, done);
   });
 
-  it('should provide a custom message when an invalid value is provided, and the validation is followed by withMessage', function(done) {
+  it('should provide a custom message when an invalid value is provided, and the validation is followed by withMessage', done => {
     getRoute('/199', fail(mustBeTwoDigitsMessage), 1, done);
   });
 
-  it('should update the error message only if the preceeding validation was the one to fail', async function() {
-    var validator = require('../src/koa_validator')();
-    var ctx = {
+  it('should update the error message only if the preceeding validation was the one to fail', async () => {
+    const validator = require('../src/koa_validator')(); // eslint-disable-line
+    const ctx = {
       request: {
         body: {
           testParam: 'abc',
@@ -97,7 +98,7 @@ describe('#withMessage()', function() {
       },
     };
 
-    validator(ctx, async function() {});
+    validator(ctx, async () => {});
 
     ctx
       .check('testParam', 'Default Error Message')
@@ -105,7 +106,7 @@ describe('#withMessage()', function() {
       .isLength({ min: 2 })
       .withMessage('Custom Error Message');
 
-    let errors = await ctx.validationErrors();
+    const errors = await ctx.validationErrors();
     expect(errors).to.deep.equal([
       { param: 'testParam', msg: 'Default Error Message', value: 'abc' },
     ]);

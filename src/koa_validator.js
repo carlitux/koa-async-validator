@@ -1,59 +1,33 @@
 import validator from 'validator';
 import _ from 'lodash';
 
-// When validator upgraded to v5, they removed automatic string coercion
-// The next few methods (up to validator.init()) restores that functionality
-// so that koa-async-validator can continue to function normally
-validator.extend = function(name, fn) {
-  validator[name] = function() {
-    var args = Array.prototype.slice.call(arguments);
-    args[0] = validator.toString(args[0]);
-    return fn.apply(validator, args);
-  };
-};
-
-validator.init = function() {
-  for (var name in validator) {
-    if (
-      typeof validator[name] !== 'function' ||
-      name === 'toString' ||
-      name === 'toDate' ||
-      name === 'extend' ||
-      name === 'init' ||
-      name === 'isServerSide'
-    ) {
-      continue;
-    }
-    validator.extend(name, validator[name]);
-  }
-};
-
-validator.toString = function(input) {
+const toString = input => {
   if (typeof input === 'object' && input !== null && input.toString) {
-    input = input.toString();
-  } else if (
+    return input.toString();
+  }
+
+  if (
     input === null ||
     typeof input === 'undefined' ||
-    (isNaN(input) && !input.length)
+    (Number.isNaN(input) && !input.length)
   ) {
-    input = '';
+    return '';
   }
-  return '' + input;
+  return `${input}`;
 };
 
-validator.toDate = function(date) {
+validator.toDate = date => {
   if (Object.prototype.toString.call(date) === '[object Date]') {
     return date;
   }
-  date = Date.parse(date);
-  return !isNaN(date) ? new Date(date) : null;
+
+  const parsedDate = Date.parse(date);
+  return !Number.isNaN(parsedDate) ? new Date(parsedDate) : null;
 };
 
-validator.init();
-
 // validators and sanitizers not prefixed with is/to
-var additionalValidators = ['contains', 'equals', 'matches'];
-var additionalSanitizers = [
+const additionalValidators = ['contains', 'equals', 'matches'];
+const additionalSanitizers = [
   'trim',
   'ltrim',
   'rtrim',
@@ -63,6 +37,50 @@ var additionalSanitizers = [
   'blacklist',
   'normalizeEmail',
 ];
+
+/**
+ * find location of param
+ *
+ * @method param
+ * @param  {Request} req       express request object
+ * @param  {(string|string[])} name [description]
+ * @return {string}
+ */
+
+const locate = (ctx, name) => {
+  if (_.get(ctx.params, name)) {
+    return 'params';
+  }
+
+  if (_.has(ctx.query, name)) {
+    return 'query';
+  }
+
+  if (_.has(ctx.request.body, name)) {
+    return 'body';
+  }
+
+  return undefined;
+};
+
+// Convert nested params as array into string for output
+// Ex: ['users', '0', 'fields', 'email'] to 'users[0].fields.email'
+const formatParamOutput = param => {
+  if (Array.isArray(param)) {
+    return param.reduce((prev, curr) => {
+      if (validator.isInt(`${curr}`)) {
+        return `${prev}[${curr}]`;
+      }
+
+      if (prev) {
+        return `${prev}.${curr}`;
+      }
+      return `${prev}${curr}`;
+    });
+  }
+
+  return param;
+};
 
 /**
  * Initializes a chain of validators
@@ -76,9 +94,9 @@ var additionalSanitizers = [
  */
 
 class ValidatorChain {
-  constructor(param, failMsg, ctx, location, options) {
-    let context = location === 'body' ? ctx.request[location] : ctx[location];
-    this.errorFormatter = options.errorFormatter;
+  constructor(param, failMsg, ctx, location, { errorFormatter }) {
+    const context = location === 'body' ? ctx.request[location] : ctx[location];
+    this.errorFormatter = errorFormatter;
     this.param = param;
     this.value = location ? _.get(context, param) : undefined;
     this.validationErrors = [];
@@ -87,135 +105,58 @@ class ValidatorChain {
     this.lastError = null; // used by withMessage to get the values of the last error
     return this;
   }
-}
 
-/**
- * Initializes a sanitizer
- *
- * @class
- * @param  {(string|string[])}  param    path to property to sanitize
- * @param  {[type]}             req             request to sanitize
- * @param  {[type]}             location        request property to find value
- */
-
-class Sanitizer {
-  constructor(param, ctx, locations) {
-    this.values = locations.map(function(location) {
-      let context = location === 'body' ? ctx.request[location] : ctx[location];
-      return _.get(context, param);
-    });
-
-    this.ctx = ctx;
-    this.param = param;
-    this.locations = locations;
-    return this;
-  }
-}
-
-/**
- * Adds validation methods to request object via express middleware
- *
- * @method koaValidator
- * @param  {object}         options
- * @return {function}       middleware
- */
-
-var koaValidator = function(options) {
-  options = options || {};
-
-  let defaults = {
-    customValidators: {},
-    customSanitizers: {},
-    errorFormatter: function(param, msg, value) {
-      return {
-        param: param,
-        msg: msg,
-        value: value,
-      };
-    },
-  };
-
-  _.defaults(options, defaults);
-
-  // _.set validators and sanitizers as prototype methods on corresponding chains
-  _.forEach(validator, function(method, methodName) {
-    if (
-      methodName.match(/^is/) ||
-      _.includes(additionalValidators, methodName)
-    ) {
-      ValidatorChain.prototype[methodName] = makeValidator(
-        methodName,
-        validator,
-      );
-    }
-
-    if (
-      methodName.match(/^to/) ||
-      _.includes(additionalSanitizers, methodName)
-    ) {
-      Sanitizer.prototype[methodName] = makeSanitizer(methodName, validator);
-    }
-  });
-
-  ValidatorChain.prototype.notEmpty = function() {
+  notEmpty() {
     return this.isLength({
       min: 1,
     });
-  };
+  }
 
-  ValidatorChain.prototype.len = function() {
-    return this.isLength.apply(this, arguments);
-  };
+  len(...rest) {
+    return this.isLength(...rest);
+  }
 
-  ValidatorChain.prototype.optional = function(opts) {
-    opts = opts || {};
-    // By default, optional checks if the key exists, but the user can pass in
-    // checkFalsy: true to skip validation if the property is falsy
-    var defaults = {
-      checkFalsy: false,
-    };
-
-    var options = _.assign(defaults, opts);
-
-    if (options.checkFalsy) {
+  optional({ checkFalsy = false } = {}) {
+    if (checkFalsy) {
       if (!this.value) {
         this.skipValidating = true;
       }
-    } else {
-      if (this.value === undefined) {
-        this.skipValidating = true;
-      }
+    } else if (this.value === undefined) {
+      this.skipValidating = true;
     }
 
     return this;
-  };
+  }
 
-  ValidatorChain.prototype.withMessage = function(message) {
+  formatErrors(param, msg, value) {
+    const formattedParam = formatParamOutput(param);
+    return this.errorFormatter(formattedParam, msg, value);
+  }
+
+  withMessage(message) {
     if (this.lastError) {
       if (this.lastError.isAsync) {
-        let isValid = this.ctx._asyncValidationErrors.pop();
-        let validate = async () => {
-          let validated = false;
-          try {
-            validated = await isValid();
-          } catch (e) {}
+        const isValid = this.ctx._asyncValidationErrors.pop();
+
+        const validate = async () => {
+          const validated = await isValid();
 
           if (!validated) {
-            return formatErrors.call(
-              this.lastError.context,
+            return this.formatErrors(
               this.lastError.param,
               message,
               this.lastError.value,
             );
           }
+
+          return undefined;
         };
 
         this.ctx._asyncValidationErrors.push(validate);
       } else {
         this.validationErrors.pop();
         this.ctx._validationErrors.pop();
-        var errorMessage = formatErrors.call(
-          this,
+        const errorMessage = this.formatErrors(
           this.lastError.param,
           message,
           this.lastError.value,
@@ -227,109 +168,8 @@ var koaValidator = function(options) {
     }
 
     return this;
-  };
-
-  _.forEach(options.customValidators, function(method, customValidatorName) {
-    ValidatorChain.prototype[customValidatorName] = makeValidator(
-      customValidatorName,
-      options.customValidators,
-    );
-  });
-
-  _.forEach(options.customSanitizers, function(method, customSanitizerName) {
-    Sanitizer.prototype[customSanitizerName] = makeSanitizer(
-      customSanitizerName,
-      options.customSanitizers,
-    );
-  });
-
-  return async (ctx, next) => {
-    var locations = ['body', 'params', 'query'];
-
-    ctx._validationErrors = [];
-    ctx._asyncValidationErrors = [];
-
-    ctx.validationErrors = async function(mapped) {
-      if (ctx._asyncValidationErrors.length > 0) {
-        for (let index in ctx._asyncValidationErrors) {
-          let error = await ctx._asyncValidationErrors[index]();
-          if (error) {
-            ctx._validationErrors.push(error);
-          }
-        }
-      }
-
-      if (mapped && ctx._validationErrors.length > 0) {
-        var errors = {};
-        ctx._validationErrors.forEach(function(err) {
-          errors[err.param] = err;
-        });
-
-        return errors;
-      }
-
-      return ctx._validationErrors.length > 0 ? ctx._validationErrors : false;
-    };
-
-    locations.forEach(function(location) {
-      ctx['sanitize' + _.capitalize(location)] = function(param) {
-        return new Sanitizer(param, ctx, [location]);
-      };
-    });
-
-    ctx.sanitizeHeaders = function(param) {
-      if (param === 'referrer') {
-        param = 'referer';
-      }
-
-      return new Sanitizer(param, ctx, ['headers']);
-    };
-
-    ctx.sanitize = function(param) {
-      return new Sanitizer(param, ctx, locations);
-    };
-
-    locations.forEach(function(location) {
-      ctx['check' + _.capitalize(location)] = function(param, failMsg) {
-        if (_.isPlainObject(param)) {
-          return validateSchema(param, ctx, location, options);
-        }
-        return new ValidatorChain(param, failMsg, ctx, location, options);
-      };
-    });
-
-    ctx.checkFiles = function(param, failMsg) {
-      return new ValidatorChain(param, failMsg, ctx, 'files', options);
-    };
-
-    ctx.checkHeaders = function(param, failMsg) {
-      if (param === 'referrer') {
-        param = 'referer';
-      }
-
-      return new ValidatorChain(param, failMsg, ctx, 'headers', options);
-    };
-
-    ctx.check = function(param, failMsg) {
-      if (_.isPlainObject(param)) {
-        return validateSchema(param, ctx, 'any', options);
-      }
-      return new ValidatorChain(
-        param,
-        failMsg,
-        ctx,
-        locate(ctx, param),
-        options,
-      );
-    };
-
-    ctx.filter = ctx.sanitize;
-    ctx.assert = ctx.check;
-    ctx.validate = ctx.check;
-
-    await next();
-  };
-};
+  }
+}
 
 /**
  * validate an object using a schema, using following format:
@@ -360,43 +200,54 @@ var koaValidator = function(options) {
  * @return {object[]}               array of errors
  */
 
-function validateSchema(schema, ctx, loc, options) {
-  var locations = ['body', 'params', 'query'],
-    currentLoc = loc;
+const validateSchema = (schema, ctx, loc, options) => {
+  const locations = ['body', 'params', 'query'];
+  let currentLoc = loc;
 
-  for (let param in schema) {
+  Object.entries(schema).forEach(([fieldName, constrains]) => {
     // check if schema has defined location
-    if (schema[param].hasOwnProperty('in')) {
-      if (locations.indexOf(schema[param].in) !== -1) {
-        currentLoc = schema[param].in;
+    if (Object.prototype.hasOwnProperty.call(constrains, 'in')) {
+      if (locations.indexOf(constrains.in) !== -1) {
+        currentLoc = constrains.in;
       } else {
         // skip params where defined location is not supported
-        continue;
+        return;
       }
     }
 
-    currentLoc = currentLoc === 'any' ? locate(ctx, param) : currentLoc;
-    var validator = new ValidatorChain(param, null, ctx, currentLoc, options);
-    var paramErrorMessage = schema[param].errorMessage;
-    delete schema[param].errorMessage;
+    currentLoc = currentLoc === 'any' ? locate(ctx, fieldName) : currentLoc;
 
-    for (var methodName in schema[param]) {
+    const validatorChain = new ValidatorChain(
+      fieldName,
+      null,
+      ctx,
+      currentLoc,
+      options,
+    );
+
+    const paramErrorMessage = constrains.errorMessage;
+
+    Object.entries(constrains).forEach(([methodName, methodOptions]) => {
+      if (methodName === 'errorMessage') {
+        return;
+      }
+
       if (methodName === 'in') {
         /* Skip method if this is location definition, do not validate it.
-          * Restore also the original location that was changed only for this particular param.
-            * Without it everything after param with in field would be validated against wrong location.
-            */
+         * Restore also the original location that was changed only for this particular param.
+         * Without it everything after param with in field would be validated against wrong location.
+         */
         currentLoc = loc;
-        continue;
+        return;
       }
-      validator.failMsg =
-        schema[param][methodName].errorMessage ||
-        paramErrorMessage ||
-        'Invalid param';
-      validator[methodName].apply(validator, schema[param][methodName].options);
-    }
-  }
-}
+
+      validatorChain.failMsg =
+        methodOptions.errorMessage || paramErrorMessage || 'Invalid param';
+
+      validatorChain[methodName](...(methodOptions.options || []));
+    });
+  });
+};
 
 /**
  * Validates and handles errors, return instance of itself to allow for chaining
@@ -407,43 +258,40 @@ function validateSchema(schema, ctx, loc, options) {
  * @return {function}
  */
 
-function makeValidator(methodName, container) {
-  return function() {
+const makeValidator = (methodName, container) =>
+  function dynamicValidator(...rest) {
     if (this.skipValidating) {
       return this;
     }
 
-    var args = [];
-    args.push(this.value);
-    args = args.concat(Array.prototype.slice.call(arguments));
+    const ctx = container === validator ? undefined : this.ctx;
 
-    container.ctx = this.ctx;
-    var isValid = container[methodName].apply(container, args);
-    var error = formatErrors.call(
-      this,
+    const isValid = container[methodName](
+      container === validator ? toString(this.value) : this.value,
+      ...rest,
+      ctx,
+    );
+    const error = this.formatErrors(
       this.param,
       this.failMsg || 'Invalid value',
       this.value,
     );
 
     if (isValid.then) {
-      let validate = async () => {
-        let validated;
-        try {
-          validated = await isValid;
-        } catch (e) {
-          validated = false;
-        }
+      const validate = async () => {
+        const validated = await isValid;
+
         if (!validated) {
           return error;
         }
+
+        return undefined;
       };
 
       this.lastError = {
         promise: isValid,
         param: this.param,
         value: this.value,
-        context: this,
         isAsync: true,
       };
 
@@ -458,7 +306,6 @@ function makeValidator(methodName, container) {
 
     return this;
   };
-}
 
 /**
  * Sanitizes and sets sanitized value on the request, then return instance of itself to allow for chaining
@@ -469,94 +316,188 @@ function makeValidator(methodName, container) {
  * @return {function}
  */
 
-function makeSanitizer(methodName, container) {
-  return function() {
-    var _arguments = arguments;
-    var result;
-    this.values.forEach(
-      function(value, i) {
-        if (value != null) {
-          var args = [value];
-          args = args.concat(Array.prototype.slice.call(_arguments));
-          result = container[methodName].apply(container, args);
+const makeSanitizer = (methodName, container) =>
+  function dynamicSanitizer(...rest) {
+    let result;
 
-          let location =
-            this.locations[i] === 'body'
-              ? this.ctx.request[this.locations[i]]
-              : this.ctx[this.locations[i]];
-
-          _.set(location, this.param, result);
-          this.values[i] = result;
+    this.values.forEach((value, i) => {
+      if (value != null) {
+        if (methodName === 'toString') {
+          result = toString(value, ...rest);
+        } else {
+          result = container[methodName](value, ...rest);
         }
-      }.bind(this),
-    );
+
+        const location =
+          this.locations[i] === 'body'
+            ? this.ctx.request[this.locations[i]]
+            : this.ctx[this.locations[i]];
+
+        _.set(location, this.param, result);
+        this.values[i] = result;
+      }
+    });
 
     return result;
   };
+
+/**
+ * Initializes a sanitizer
+ *
+ * @class
+ * @param  {(string|string[])}  param    path to property to sanitize
+ * @param  {[type]}             req             request to sanitize
+ * @param  {[type]}             location        request property to find value
+ */
+
+class Sanitizer {
+  constructor(param, ctx, locations) {
+    this.values = locations.map(location => {
+      const context =
+        location === 'body' ? ctx.request[location] : ctx[location];
+      return _.get(context, param);
+    });
+
+    this.ctx = ctx;
+    this.param = param;
+    this.locations = locations;
+    return this;
+  }
 }
 
 /**
- * find location of param
+ * Adds validation methods to request object via express middleware
  *
- * @method param
- * @param  {Request} req       express request object
- * @param  {(string|string[])} name [description]
- * @return {string}
+ * @method koaValidator
+ * @param  {object}         options
+ * @return {function}       middleware
  */
-
-function locate(ctx, name) {
-  if (_.get(ctx.params, name)) {
-    return 'params';
-  } else if (_.has(ctx.query, name)) {
-    return 'query';
-  } else if (_.has(ctx.request.body, name)) {
-    return 'body';
+// _.set validators and sanitizers as prototype methods on corresponding chains
+_.forEach(validator, (method, methodName) => {
+  if (methodName.match(/^is/) || _.includes(additionalValidators, methodName)) {
+    ValidatorChain.prototype[methodName] = makeValidator(methodName, validator);
   }
 
-  return undefined;
-}
+  if (methodName.match(/^to/) || _.includes(additionalSanitizers, methodName)) {
+    Sanitizer.prototype[methodName] = makeSanitizer(methodName, validator);
+  }
+});
 
-/**
- * format param output if passed in as array (for nested)
- * before calling errorFormatter
- *
- * @method param
- * @param  {(string|string[])} param       parameter as a string or array
- * @param  {string} msg
- * @param  {string} value
- * @return {function}
- */
-function formatErrors(param, msg, value) {
-  var formattedParam = formatParamOutput(param);
+const defaultErrorFormatter = (param, msg, value) => ({ param, msg, value });
 
-  return this.errorFormatter(formattedParam, msg, value);
-}
+const koaValidator = ({
+  customValidators = {},
+  customSanitizers = {},
+  errorFormatter = defaultErrorFormatter,
+  ...rest
+} = {}) => {
+  const options = {
+    errorFormatter,
+    ...rest,
+  };
 
-// Convert nested params as array into string for output
-// Ex: ['users', '0', 'fields', 'email'] to 'users[0].fields.email'
-function formatParamOutput(param) {
-  if (Array.isArray(param)) {
-    param = param.reduce(function(prev, curr) {
-      var part = '';
-      if (validator.isInt(curr)) {
-        part = '[' + curr + ']';
-      } else {
-        if (prev) {
-          part = '.' + curr;
-        } else {
-          part = curr;
-        }
+  _.forEach(customValidators, (method, customValidatorName) => {
+    ValidatorChain.prototype[customValidatorName] = makeValidator(
+      customValidatorName,
+      customValidators,
+    );
+  });
+
+  _.forEach(customSanitizers, (method, customSanitizerName) => {
+    Sanitizer.prototype[customSanitizerName] = makeSanitizer(
+      customSanitizerName,
+      customSanitizers,
+    );
+  });
+
+  return async (ctx, next) => {
+    const locations = ['body', 'params', 'query'];
+
+    ctx._validationErrors = [];
+    ctx._asyncValidationErrors = [];
+
+    ctx.validationErrors = async mapped => {
+      if (ctx._asyncValidationErrors.length > 0) {
+        const errors = await Promise.all(
+          ctx._asyncValidationErrors.map(validate => validate()),
+        );
+        errors.forEach(error => {
+          if (error) {
+            ctx._validationErrors.push(error);
+          }
+        });
       }
 
-      return prev + part;
-    });
-  }
+      if (mapped && ctx._validationErrors.length > 0) {
+        const errors = {};
+        ctx._validationErrors.forEach(err => {
+          errors[err.param] = err;
+        });
 
-  return param;
-}
+        return errors;
+      }
+
+      return ctx._validationErrors.length > 0 ? ctx._validationErrors : false;
+    };
+
+    // Sanitizer setup
+    locations.forEach(location => {
+      ctx[`sanitize${_.capitalize(location)}`] = param =>
+        new Sanitizer(param, ctx, [location]);
+    });
+
+    ctx.sanitizeHeaders = param =>
+      new Sanitizer(param === 'referrer' ? 'referer' : param, ctx, ['headers']);
+
+    ctx.sanitize = param => new Sanitizer(param, ctx, locations);
+
+    // Validation
+
+    locations.forEach(location => {
+      ctx[`check${_.capitalize(location)}`] = (param, failMsg) => {
+        if (_.isPlainObject(param)) {
+          return validateSchema(param, ctx, location, options);
+        }
+        return new ValidatorChain(param, failMsg, ctx, location, options);
+      };
+    });
+
+    ctx.checkFiles = (param, failMsg) =>
+      new ValidatorChain(param, failMsg, ctx, 'files', options);
+
+    ctx.checkHeaders = (param, failMsg) =>
+      new ValidatorChain(
+        param === 'referrer' ? 'referer' : param,
+        failMsg,
+        ctx,
+        'headers',
+        options,
+      );
+
+    ctx.check = (param, failMsg) => {
+      if (_.isPlainObject(param)) {
+        return validateSchema(param, ctx, 'any', options);
+      }
+
+      return new ValidatorChain(
+        param,
+        failMsg,
+        ctx,
+        locate(ctx, param),
+        options,
+      );
+    };
+
+    ctx.filter = ctx.sanitize;
+    ctx.assert = ctx.check;
+    ctx.validate = ctx.check;
+
+    await next();
+  };
+};
 
 module.exports = koaValidator;
 module.exports.validator = validator;
 module.exports.utils = {
-  formatParamOutput: formatParamOutput,
+  formatParamOutput,
 };

@@ -1,14 +1,15 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-var errorMessage = 'valid email required';
+const { expect } = chai;
+let request;
 
-async function validation(ctx, next) {
+const errorMessage = 'valid email required';
+
+async function validation(ctx) {
   ctx.assert('email', 'required').notEmpty();
   ctx.assert('email', errorMessage).isEmail();
 
-  var errors = await ctx.validationErrors(true);
+  const errors = await ctx.validationErrors(true);
 
   if (errors) {
     ctx.body = errors;
@@ -31,7 +32,7 @@ function testRoute(path, data, test, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body);
       done();
     });
@@ -39,18 +40,18 @@ function testRoute(path, data, test, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#validationErrors(true)', function() {
-  it('should return a success when the correct data is passed on the body', function(done) {
+describe('#validationErrors(true)', () => {
+  it('should return a success when the correct data is passed on the body', done => {
     testRoute('/', { email: 'test@example.com' }, pass, done);
   });
 
-  it('should return a mapped error object with each failing param as a property data is invalid', function(done) {
+  it('should return a mapped error object with each failing param as a property data is invalid', done => {
     testRoute('/path', { email: 'incorrect' }, fail, done);
   });
 });

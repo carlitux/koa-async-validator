@@ -1,8 +1,9 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-async function validation(ctx, next) {
+const { expect } = chai;
+let request;
+
+async function validation(ctx) {
   ctx.sanitize(['user', 'fields', 'email']).trim();
   ctx.body = ctx.request.body;
 }
@@ -15,7 +16,7 @@ function postRoute(path, data, test, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body);
       done();
     });
@@ -23,15 +24,15 @@ function postRoute(path, data, test, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#nestedInputSanitizers', function() {
-  describe('POST tests', function() {
-    it('should return property and sanitized value', function(done) {
+describe('#nestedInputSanitizers', () => {
+  describe('POST tests', () => {
+    it('should return property and sanitized value', done => {
       postRoute(
         '/',
         { user: { fields: { email: '     test@example.com       ' } } },

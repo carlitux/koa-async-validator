@@ -1,9 +1,9 @@
 {
   "extends": [
+    "airbnb-base",
     "prettier",
   ],
   "env": {
-    "browser": true,
     "node": true,
     "mocha": true
   },
@@ -15,15 +15,21 @@
     "prettier/prettier": ["error", {
       "singleQuote": true,
       "trailingComma": "all",
+      // "bracketSpacing": false,
+      "jsxBracketSameLine": true,
     }],
-    "no-underscore-dangle": [0],
+    "no-underscore-dangle": [0]
   },
   "plugins": [
-    "prettier"
+    "prettier",
   ],
   "settings": {
     "ecmascript": 7,
+    "import/resolver": {
+      "node": {
+        "paths": ["src"],
+        "modulesDirectories": ["node_modules"]
+      }
+    }
   },
-  "globals": {
-  }
 }

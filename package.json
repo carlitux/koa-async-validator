@@ -3,7 +3,7 @@
   "description": "Koa middleware for the validator module.",
   "author": "Luis Carlos Cruz Carballo <lcruzc@linkux-it.com",
   "contributors": [],
-  "version": "0.2.1",
+  "version": "0.3.0",
   "homepage": "https://github.com/carlitux/koa-async-validator",
   "license": "MIT",
   "repository": {
@@ -18,25 +18,25 @@
     "changelog": "github-changes -o carlitux -r koa-async-validator -a -m YYYY/MM/DD --no-merges"
   },
   "engines": {
-    "node": ">= 6"
+    "node": ">= 10"
   },
   "dependencies": {
-    "babel-runtime": "^6.11.6",
     "lodash": "^4.16.4",
-    "regenerator-runtime": "^0.12.1",
-    "validator": "^10.8.0"
+    "validator": "^11.0.0"
   },
   "devDependencies": {
+    "babel-runtime": "^6.11.6",
     "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
     "@babel/register": "^7.0.0-beta.54",
     "babel-eslint": "^10.0.1",
-    "bluebird": "^3.4.0",
     "body-parser": "^1.18.3",
     "chai": "^4.2.0",
     "eslint": "^5.7.0",
+    "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-prettier": "^3.1.0",
+    "eslint-plugin-import": "^2.17.3",
     "eslint-plugin-prettier": "^3.0.0",
     "github-changes": "^1.1.2",
     "koa": "^2.0.0",

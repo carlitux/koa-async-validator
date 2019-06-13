@@ -1,13 +1,14 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-async function validation(ctx, next) {
-  var body = ctx.sanitizeBody('testparam').whitelist(['a', 'b', 'c']);
-  var query = ctx.sanitizeQuery('testparam').whitelist(['a', 'b', 'c']);
-  var params = ctx.sanitizeParams('testparam').whitelist(['a', 'b', 'c']);
+const { expect } = chai;
+let request;
 
-  ctx.body = { params: params, query: query, body: body };
+async function validation(ctx) {
+  const body = ctx.sanitizeBody('testparam').whitelist(['a', 'b', 'c']);
+  const query = ctx.sanitizeQuery('testparam').whitelist(['a', 'b', 'c']);
+  const params = ctx.sanitizeParams('testparam').whitelist(['a', 'b', 'c']);
+
+  ctx.body = { params, query, body };
 }
 
 function pass(body) {
@@ -29,7 +30,7 @@ function fail(body) {
 }
 
 function getRoute(path, test, done) {
-  request.get(path).end(function(err, res) {
+  request.get(path).end((err, res) => {
     test(res.body);
     done();
   });
@@ -39,7 +40,7 @@ function postRoute(path, data, test, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body);
       done();
     });
@@ -47,31 +48,31 @@ function postRoute(path, data, test, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#sanitizers (check results)', function() {
-  describe('GET tests', function() {
-    it('should return property and sanitized value when param is present', function(done) {
+describe('#sanitizers (check results)', () => {
+  describe('GET tests', () => {
+    it('should return property and sanitized value when param is present', done => {
       getRoute('/abcdef', pass, done);
     });
-    it('should not return property when query and param is missing', function(done) {
+    it('should not return property when query and param is missing', done => {
       getRoute('/', fail, done);
     });
 
-    it('should return both query and param and sanitized values when they are both present', function(done) {
+    it('should return both query and param and sanitized values when they are both present', done => {
       getRoute('/abcdef?testparam=abcdef', pass, done);
     });
   });
-  describe('POST tests', function() {
-    it('should return property and sanitized value when param is present', function(done) {
+  describe('POST tests', () => {
+    it('should return property and sanitized value when param is present', done => {
       postRoute('/abcdef', null, pass, done);
     });
 
-    it('should return both query and param and sanitized values when they are both present', function(done) {
+    it('should return both query and param and sanitized values when they are both present', done => {
       postRoute(
         '/abcdef?testparam=abcdef',
         { testparam: '    abcdef     ' },
@@ -80,7 +81,7 @@ describe('#sanitizers (check results)', function() {
       );
     });
 
-    it('should return property and sanitized value when body is present', function(done) {
+    it('should return property and sanitized value when body is present', done => {
       postRoute('/', { testparam: '     abcdef     ' }, pass, done);
     });
   });

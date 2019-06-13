@@ -1,8 +1,9 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-async function validation(ctx, next) {
+const { expect } = chai;
+let request;
+
+async function validation(ctx) {
   ctx.sanitize('testparam').toTestSanitize();
   ctx.body = {
     testparam:
@@ -19,7 +20,7 @@ function fail(body) {
 }
 
 function getRoute(path, test, done) {
-  request.get(path).end(function(err, res) {
+  request.get(path).end((err, res) => {
     test(res.body);
     done();
   });
@@ -29,7 +30,7 @@ function postRoute(path, data, test, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body);
       done();
     });
@@ -37,35 +38,35 @@ function postRoute(path, data, test, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#customSanitizers', function() {
-  describe('GET tests', function() {
-    it('should return property and sanitized value when param is present', function(done) {
+describe('#customSanitizers', () => {
+  describe('GET tests', () => {
+    it('should return property and sanitized value when param is present', done => {
       getRoute('/valA', pass, done);
     });
-    it('should not return property when query and param is missing', function(done) {
+    it('should not return property when query and param is missing', done => {
       getRoute('/', fail, done);
     });
 
-    it('should return property and sanitized value when query and param is present', function(done) {
+    it('should return property and sanitized value when query and param is present', done => {
       getRoute('/42?testparam=42', pass, done);
     });
   });
-  describe('POST tests', function() {
-    it('should return property and sanitized value when param is present', function(done) {
+  describe('POST tests', () => {
+    it('should return property and sanitized value when param is present', done => {
       postRoute('/valA', null, pass, done);
     });
 
-    it('should return property and sanitized value when body, param and query is present', function(done) {
+    it('should return property and sanitized value when body, param and query is present', done => {
       postRoute('/vaA?testparam=gettest', { testparam: '42' }, pass, done);
     });
 
-    it('should return property and sanitized value when body is present', function(done) {
+    it('should return property and sanitized value when body is present', done => {
       postRoute('/', { testparam: '42' }, pass, done);
     });
   });

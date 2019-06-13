@@ -1,6 +1,6 @@
 import util from 'util';
 import Koa from 'koa';
-import koaValidator from 'koa-async-validator';
+import koaValidator from 'koa-async-validator'; // eslint-disable-line
 import bodyParser from 'koa-bodyparser';
 import Router from 'koa-router';
 
@@ -8,7 +8,8 @@ const app = new Koa();
 const router = new Router();
 
 app.use(bodyParser());
-app.use(expressValidator([options])); // this line must be immediately after bodyParser()!
+// eslint-disable-next-line
+app.use(koaValidator([options])); // this line must be immediately after bodyParser()!
 
 router.post('/:urlparam', async (ctx, next) => {
   // VALIDATION
@@ -37,7 +38,7 @@ router.post('/:urlparam', async (ctx, next) => {
   // OR find the relevent param in all areas
   ctx.sanitize('postparam').toBoolean();
 
-  let errors = await ctx.validationErrors();
+  const errors = await ctx.validationErrors();
 
   if (errors) {
     ctx.body = `There have been validation errors: ${util.inspect(errors)}`;

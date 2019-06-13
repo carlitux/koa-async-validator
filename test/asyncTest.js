@@ -1,8 +1,9 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-var errorMessage = 'Parameter is not 42';
+const { expect } = chai;
+let request;
+
+const errorMessage = 'Parameter is not 42';
 
 // There are three ways to pass parameters to express:
 // - as part of the URL
@@ -11,15 +12,15 @@ var errorMessage = 'Parameter is not 42';
 // These test show that req.checkQuery are only interested in req.query values, all other
 // parameters will be ignored.
 
-async function validation(ctx, next) {
+async function validation(ctx) {
   ctx
     .checkQuery('testparam', errorMessage)
     .notEmpty()
     .isAsyncTest();
 
-  let errors = await ctx.validationErrors();
+  const errors = await ctx.validationErrors();
 
-  ctx.body = errors ? errors : { testparam: ctx.query.testparam };
+  ctx.body = errors || { testparam: ctx.query.testparam };
 }
 
 function fail(body, length) {
@@ -32,7 +33,7 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request.get(path).end(function(err, res) {
+  request.get(path).end((err, res) => {
     test(res.body, length);
     done();
   });
@@ -42,7 +43,7 @@ function postRoute(path, data, test, length, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body, length);
       done();
     });
@@ -50,51 +51,51 @@ function postRoute(path, data, test, length, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#asyncTest()', function() {
-  describe('GET tests', function() {
-    it('should return two errors when query is missing, and unrelated param is present', function(done) {
+describe('#asyncTest()', () => {
+  describe('GET tests', () => {
+    it('should return two errors when query is missing, and unrelated param is present', done => {
       getRoute('/test', fail, 2, done);
     });
 
-    it('should return two errors when query is missing', function(done) {
+    it('should return two errors when query is missing', done => {
       getRoute('/', fail, 2, done);
     });
 
-    it('should return a success when query validates and unrelated query is present', function(done) {
+    it('should return a success when query validates and unrelated query is present', done => {
       getRoute('/42?testparam=42', pass, null, done);
     });
 
-    it('should return one error when query does not validate as int and unrelated query is present', function(done) {
+    it('should return one error when query does not validate as int and unrelated query is present', done => {
       getRoute('/test?testparam=blah', fail, 1, done);
     });
   });
 
-  describe('POST tests', function() {
-    it('should return two errors when query is missing, and unrelated param is present', function(done) {
+  describe('POST tests', () => {
+    it('should return two errors when query is missing, and unrelated param is present', done => {
       postRoute('/test', null, fail, 2, done);
     });
 
-    it('should return two errors when query is missing', function(done) {
+    it('should return two errors when query is missing', done => {
       postRoute('/', null, fail, 2, done);
     });
 
-    it('should return a success when query validates and unrelated query is present', function(done) {
+    it('should return a success when query validates and unrelated query is present', done => {
       postRoute('/42?testparam=42', null, pass, null, done);
     });
 
-    it('should return one error when query does not validate as int and unrelated query is present', function(done) {
+    it('should return one error when query does not validate as int and unrelated query is present', done => {
       postRoute('/test?testparam=blah', null, fail, 1, done);
     });
 
     // POST only
 
-    it('should return a success when query validates and unrelated param/body is present', function(done) {
+    it('should return a success when query validates and unrelated param/body is present', done => {
       postRoute(
         '/test?testparam=42',
         { testparam: 'posttest' },
@@ -104,11 +105,11 @@ describe('#asyncTest()', function() {
       );
     });
 
-    it('should return one error when query does not validate as int and unrelated param/body is present', function(done) {
+    it('should return one error when query does not validate as int and unrelated param/body is present', done => {
       postRoute('/test?testparam=blah', { testparam: '42' }, fail, 1, done);
     });
 
-    it('should return two errors when query is missing and unrelated body is present', function(done) {
+    it('should return two errors when query is missing and unrelated body is present', done => {
       postRoute('/', { testparam: '42' }, fail, 2, done);
     });
   });

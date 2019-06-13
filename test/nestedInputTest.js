@@ -1,14 +1,15 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-async function validation(ctx, next) {
+const { expect } = chai;
+let request;
+
+async function validation(ctx) {
   ctx.assert(['user', 'fields', 'email'], 'not empty').notEmpty();
   ctx.assert('user.fields.email', 'not empty').notEmpty();
   ctx.assert(['user', 'fields', 'email'], 'valid email required').isEmail();
   ctx.assert(['admins', '0', 'name'], 'must only contain letters').isAlpha();
 
-  var errors = await ctx.validationErrors();
+  const errors = await ctx.validationErrors();
   if (errors) {
     ctx.body = errors;
   } else {
@@ -42,7 +43,7 @@ function testRoute(path, data, test, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body);
       done();
     });
@@ -50,14 +51,14 @@ function testRoute(path, data, test, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
-  delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+before(() => {
+  delete require.cache[require.resolve('./helpers/app')]; // eslint-disable-line
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('nested input as array or dot notation', function() {
-  it('should return a success when the correct data is passed on the body', function(done) {
+describe('nested input as array or dot notation', () => {
+  it('should return a success when the correct data is passed on the body', done => {
     testRoute(
       '/',
       {
@@ -69,7 +70,7 @@ describe('nested input as array or dot notation', function() {
     );
   });
 
-  it('should return an error object with each failing param as a property data is invalid', function(done) {
+  it('should return an error object with each failing param as a property data is invalid', done => {
     testRoute(
       '/',
       { user: { fields: { email: '' } }, admins: [{ name: 0 }] },

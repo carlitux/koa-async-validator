@@ -1,13 +1,14 @@
-var chai = require('chai');
-var expect = chai.expect;
-var formatParamOutput = require('../src/koa_validator').utils.formatParamOutput;
+const chai = require('chai');
 
-describe('#formatParamOutput()', function() {
-  it('should correct return formatted string if all elements in array are strings', function() {
+const { expect } = chai;
+const { formatParamOutput } = require('../src/koa_validator').utils;
+
+describe('#formatParamOutput()', () => {
+  it('should correct return formatted string if all elements in array are strings', () => {
     expect(formatParamOutput(['hey', 'yo', 'hello'])).to.equal('hey.yo.hello');
   });
 
-  it('should return a string with integers in brackets', function() {
+  it('should return a string with integers in brackets', () => {
     expect(formatParamOutput(['hey', 'yo', '0', 'hello'])).to.equal(
       'hey.yo[0].hello',
     );
@@ -37,7 +38,7 @@ describe('#formatParamOutput()', function() {
     );
   });
 
-  it('should return the original param if not an array', function() {
+  it('should return the original param if not an array', () => {
     expect(formatParamOutput('yo')).to.equal('yo');
   });
 });

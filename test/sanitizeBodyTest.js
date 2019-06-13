@@ -1,8 +1,9 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-async function validation(ctx, next) {
+const { expect } = chai;
+let request;
+
+async function validation(ctx) {
   ctx.sanitizeBody('testparam').whitelist(['a', 'b', 'c']);
   ctx.body = { body: ctx.request.body };
 }
@@ -18,7 +19,7 @@ function postRoute(path, data, test, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body);
       done();
     });
@@ -26,19 +27,19 @@ function postRoute(path, data, test, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#sanitizeBody', function() {
-  describe('POST tests', function() {
-    it('should return property and sanitized value when body param is present', function(done) {
+describe('#sanitizeBody', () => {
+  describe('POST tests', () => {
+    it('should return property and sanitized value when body param is present', done => {
       postRoute('/', { testparam: '   abcdf    ' }, pass, done);
     });
 
-    it('should not return property when body param is missing', function(done) {
+    it('should not return property when body param is missing', done => {
       postRoute('/', null, fail, done);
     });
   });

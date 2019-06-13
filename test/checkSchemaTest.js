@@ -1,9 +1,10 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-var errorMsg = 'Parameter is not an integer.';
-var errorMsgOutOfRange = 'Parameter is out of range or not int.';
+const { expect } = chai;
+let request;
+
+const errorMsg = 'Parameter is not an integer.';
+const errorMsgOutOfRange = 'Parameter is out of range or not int.';
 
 // There are three ways to pass parameters to express:
 // - as part of the URL
@@ -12,7 +13,7 @@ var errorMsgOutOfRange = 'Parameter is out of range or not int.';
 // These test show that req.checkParams are only interested in req.params values, all other
 // parameters will be ignored.
 
-var schema = {
+const schema = {
   testparam: {
     in: 'params',
     notEmpty: true,
@@ -61,8 +62,8 @@ var schema = {
   },
 };
 
-async function validationSendResponse(ctx, next) {
-  let errors = await ctx.validationErrors();
+async function validationSendResponse(ctx) {
+  const errors = await ctx.validationErrors();
 
   if (errors) {
     ctx.body = errors;
@@ -126,66 +127,66 @@ function failQueryParams(params, length) {
 }
 
 function getRoute(path, test, length, done) {
-  request.get(path).end(function(err, res) {
+  request.get(path).end((err, res) => {
     test(res.body, length);
     done();
   });
 }
 
-describe('Check defining validator location inside schema validators', function() {
+describe('Check defining validator location inside schema validators', () => {
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
-  before(function() {
+  before(() => {
     delete require.cache[require.resolve('./helpers/app')];
-    let app = require('./helpers/app')(validation);
-    request = require('supertest-koa-agent')(app);
+    const app = require('./helpers/app')(validation); // eslint-disable-line
+    request = require('supertest-koa-agent')(app); // eslint-disable-line
   });
 
-  it('should validate against schema with query and params locations', function(done) {
+  it('should validate against schema with query and params locations', done => {
     getRoute('/25?testquery=6&skipped=34&numInQuery=0', pass, 1, done);
   });
 
-  it('should fail when param is not integer', function(done) {
+  it('should fail when param is not integer', done => {
     getRoute('/ImNot?testquery=6&skipped=34&numInQuery=0', failParams, 1, done);
   });
 
-  it('should fail when query param is out of range', function(done) {
+  it('should fail when query param is out of range', done => {
     getRoute('/25?testquery=20&skipped=34&numInQuery=0', failQuery, 1, done);
   });
 
-  it('should fail when non of params are valid', function(done) {
+  it('should fail when non of params are valid', done => {
     getRoute('/ImNot?testquery=20&skipped=34&numInQuery=0', failAll, 2, done);
   });
 });
 
-describe('Check defining validator location inside schema validators by checkQuery()', function() {
+describe('Check defining validator location inside schema validators by checkQuery()', () => {
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
-  before(function() {
+  before(() => {
     delete require.cache[require.resolve('./helpers/app')];
-    let app = require('./helpers/app')(validationQuery);
-    request = require('supertest-koa-agent')(app);
+    const app = require('./helpers/app')(validationQuery); // eslint-disable-line
+    request = require('supertest-koa-agent')(app); // eslint-disable-line
   });
 
-  it('should validate against schema with query and params locations', function(done) {
+  it('should validate against schema with query and params locations', done => {
     getRoute('/25?testquery=6&skipped=34&numInQuery=0', pass, 1, done);
   });
 
-  it('should fail when query param is out of range', function(done) {
+  it('should fail when query param is out of range', done => {
     getRoute('/25?testquery=6&skipped=34&numInQuery=666', failQuery, 1, done);
   });
 });
 
-describe('Check defining validator location inside schema validators by checkParams()', function() {
+describe('Check defining validator location inside schema validators by checkParams()', () => {
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
-  before(function() {
+  before(() => {
     delete require.cache[require.resolve('./helpers/app')];
-    let app = require('./helpers/app')(validationParams);
-    request = require('supertest-koa-agent')(app);
+    const app = require('./helpers/app')(validationParams); // eslint-disable-line
+    request = require('supertest-koa-agent')(app); // eslint-disable-line
   });
 
-  it('should fail when searching for query param in the path params', function(done) {
+  it('should fail when searching for query param in the path params', done => {
     getRoute(
       '/25?testquery=6&skipped=34&numInQuery=666',
       failQueryParams,
@@ -195,16 +196,16 @@ describe('Check defining validator location inside schema validators by checkPar
   });
 });
 
-describe('Check defining validator location inside schema validators by checkBody()', function() {
+describe('Check defining validator location inside schema validators by checkBody()', () => {
   // This before() is required in each set of tests in
   // order to use a new validation function in each file
-  before(function() {
+  before(() => {
     delete require.cache[require.resolve('./helpers/app')];
-    let app = require('./helpers/app')(validationBody);
-    request = require('supertest-koa-agent')(app);
+    const app = require('./helpers/app')(validationBody); // eslint-disable-line
+    request = require('supertest-koa-agent')(app); // eslint-disable-line
   });
 
-  it('should fail when searching for query param in the body', function(done) {
+  it('should fail when searching for query param in the body', done => {
     getRoute(
       '/25?testquery=6&skipped=34&numInQuery=666',
       failQueryParams,

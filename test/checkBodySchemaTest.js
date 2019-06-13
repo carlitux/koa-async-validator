@@ -1,10 +1,11 @@
-var chai = require('chai');
-var expect = chai.expect;
-var request;
+const chai = require('chai');
 
-var errorMessage = 'Invalid param';
+const { expect } = chai;
+let request;
 
-async function validation(ctx, next) {
+const errorMessage = 'Invalid param';
+
+async function validation(ctx) {
   ctx.checkBody({
     testparam: {
       notEmpty: true,
@@ -15,9 +16,9 @@ async function validation(ctx, next) {
     },
   });
 
-  let errors = await ctx.validationErrors();
+  const errors = await ctx.validationErrors();
 
-  ctx.body = errors ? errors : { testparam: ctx.request.body.testparam };
+  ctx.body = errors || { testparam: ctx.request.body.testparam };
 }
 
 function fail(body, length) {
@@ -30,7 +31,7 @@ function pass(body) {
 }
 
 function getRoute(path, test, length, done) {
-  request.get(path).end(function(err, res) {
+  request.get(path).end((err, res) => {
     test(res.body, length);
     done();
   });
@@ -40,7 +41,7 @@ function postRoute(path, data, test, length, done) {
   request
     .post(path)
     .send(data)
-    .end(function(err, res) {
+    .end((err, res) => {
       test(res.body, length);
       done();
     });
@@ -48,47 +49,47 @@ function postRoute(path, data, test, length, done) {
 
 // This before() is required in each set of tests in
 // order to use a new validation function in each file
-before(function() {
+before(() => {
   delete require.cache[require.resolve('./helpers/app')];
-  let app = require('./helpers/app')(validation);
-  request = require('supertest-koa-agent')(app);
+  const app = require('./helpers/app')(validation); // eslint-disable-line
+  request = require('supertest-koa-agent')(app); // eslint-disable-line
 });
 
-describe('#checkBodySchema()', function() {
-  describe('GET tests', function() {
-    it('should return three errors when param is missing', function(done) {
+describe('#checkBodySchema()', () => {
+  describe('GET tests', () => {
+    it('should return three errors when param is missing', done => {
       getRoute('/', fail, 3, done);
     });
 
-    it('should return three errors when param is present, but not in the body', function(done) {
+    it('should return three errors when param is present, but not in the body', done => {
       getRoute('/42', fail, 3, done);
     });
   });
 
-  describe('POST tests', function() {
-    it('should return three errors when param is missing', function(done) {
+  describe('POST tests', () => {
+    it('should return three errors when param is missing', done => {
       postRoute('/', null, fail, 3, done);
     });
 
-    it('should return three errors when param is present, but not in the body', function(done) {
+    it('should return three errors when param is present, but not in the body', done => {
       postRoute('/42', null, fail, 3, done);
     });
 
     // POST only
 
-    it('should return three errors when params are not present', function(done) {
+    it('should return three errors when params are not present', done => {
       postRoute('/test?testparam=gettest', null, fail, 3, done);
     });
 
-    it('should return three errors when param is present, but not in body', function(done) {
+    it('should return three errors when param is present, but not in body', done => {
       postRoute('/42?testparam=42', null, fail, 3, done);
     });
 
-    it('should return two errors when one param is present, but does not validate', function(done) {
+    it('should return two errors when one param is present, but does not validate', done => {
       postRoute('/42?testparam=42', { testparam: 'posttest' }, fail, 2, done);
     });
 
-    it('should return a success when params validate on the body', function(done) {
+    it('should return a success when params validate on the body', done => {
       postRoute(
         '/?testparam=blah',
         { testparam: '42', arrayParam: [1, 2, 3] },
@@ -98,7 +99,7 @@ describe('#checkBodySchema()', function() {
       );
     });
 
-    it('should return two errors when two params are present, but do not validate', function(done) {
+    it('should return two errors when two params are present, but do not validate', done => {
       postRoute(
         '/?testparam=42',
         { testparam: 'posttest', arrayParam: 123 },
@@ -108,7 +109,7 @@ describe('#checkBodySchema()', function() {
       );
     });
 
-    it('should return two errors when two params are present, but do not validate', function(done) {
+    it('should return two errors when two params are present, but do not validate', done => {
       postRoute(
         '/?testparam=42',
         { testparam: 'posttest', arrayParam: {} },
@@ -118,11 +119,11 @@ describe('#checkBodySchema()', function() {
       );
     });
 
-    it('should return two errors when two params are present, but do not validate', function(done) {
+    it('should return two errors when two params are present, but do not validate', done => {
       postRoute('/', { testparam: 'test', arrayParam: '[]' }, fail, 2, done);
     });
 
-    it('should return a success when params validate on the body', function(done) {
+    it('should return a success when params validate on the body', done => {
       postRoute('/', { testparam: '42', arrayParam: [] }, pass, null, done);
     });
   });
