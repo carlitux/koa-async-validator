@@ -16,15 +16,6 @@ const toString = input => {
   return `${input}`;
 };
 
-validator.toDate = date => {
-  if (Object.prototype.toString.call(date) === '[object Date]') {
-    return date;
-  }
-
-  const parsedDate = Date.parse(date);
-  return !Number.isNaN(parsedDate) ? new Date(parsedDate) : null;
-};
-
 // validators and sanitizers not prefixed with is/to
 const additionalValidators = ['contains', 'equals', 'matches'];
 const additionalSanitizers = [
@@ -32,6 +23,7 @@ const additionalSanitizers = [
   'ltrim',
   'rtrim',
   'escape',
+  'unescape',
   'stripLow',
   'whitelist',
   'blacklist',
@@ -82,6 +74,8 @@ const formatParamOutput = param => {
   return param;
 };
 
+const defaultErrorFormatter = (param, msg, value) => ({ param, msg, value });
+
 /**
  * Initializes a chain of validators
  *
@@ -94,7 +88,16 @@ const formatParamOutput = param => {
  */
 
 class ValidatorChain {
-  constructor(param, failMsg, ctx, location, { errorFormatter }) {
+  constructor(
+    param,
+    failMsg,
+    ctx,
+    location,
+    {
+      errorFormatter = defaultErrorFormatter,
+      skipValidationOnFirstError = false,
+    },
+  ) {
     const context = location === 'body' ? ctx.request[location] : ctx[location];
     this.errorFormatter = errorFormatter;
     this.param = param;
@@ -102,6 +105,7 @@ class ValidatorChain {
     this.validationErrors = [];
     this.failMsg = failMsg;
     this.ctx = ctx;
+    this.skipValidationOnFirstError = skipValidationOnFirstError;
     this.lastError = null; // used by withMessage to get the values of the last error
     return this;
   }
@@ -271,6 +275,7 @@ const makeValidator = (methodName, container) =>
       ...rest,
       ctx,
     );
+
     const error = this.formatErrors(
       this.param,
       this.failMsg || 'Invalid value',
@@ -300,6 +305,10 @@ const makeValidator = (methodName, container) =>
       this.validationErrors.push(error);
       this.ctx._validationErrors.push(error);
       this.lastError = { param: this.param, value: this.value, isAsync: false };
+
+      if (this.skipValidationOnFirstError) {
+        this.skipValidating = true;
+      }
     } else {
       this.lastError = null;
     }
@@ -365,13 +374,6 @@ class Sanitizer {
   }
 }
 
-/**
- * Adds validation methods to request object via express middleware
- *
- * @method koaValidator
- * @param  {object}         options
- * @return {function}       middleware
- */
 // _.set validators and sanitizers as prototype methods on corresponding chains
 _.forEach(validator, (method, methodName) => {
   if (methodName.match(/^is/) || _.includes(additionalValidators, methodName)) {
@@ -383,19 +385,19 @@ _.forEach(validator, (method, methodName) => {
   }
 });
 
-const defaultErrorFormatter = (param, msg, value) => ({ param, msg, value });
+/**
+ * Adds validation methods to request object via express middleware
+ *
+ * @method koaValidator
+ * @param  {object}         options
+ * @return {function}       middleware
+ */
 
 const koaValidator = ({
   customValidators = {},
   customSanitizers = {},
-  errorFormatter = defaultErrorFormatter,
-  ...rest
+  ...options
 } = {}) => {
-  const options = {
-    errorFormatter,
-    ...rest,
-  };
-
   _.forEach(customValidators, (method, customValidatorName) => {
     ValidatorChain.prototype[customValidatorName] = makeValidator(
       customValidatorName,

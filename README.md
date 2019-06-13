@@ -102,8 +102,15 @@ There have been validation errors: [
 ```
 
 ### Middleware Options
+####`skipValidationOnFirstError`
+_{ 'skipValidationOnFirstError': boolean = false, ... }_
+
+The `skipValidationOnFirstError` option is set default to `false` that works as before, runs all validations and save the errors.
+
+If set to `true` will skip next validations when the first sync validation fails. All async validation do not follow this rule. Each validation runs in order that was defiened.
+
 ####`errorFormatter`
-_function(param,msg,value)_
+_{ 'errorFormatter': function(param,msg,value), ... }_
 
 The `errorFormatter` option can be used to specify a function that can be used to format the objects that populate the error array that is returned in `ctx.validationErrors()`. It should return an `Object` that has `param`, `msg`, and `value` keys defined.
 
