@@ -103,28 +103,29 @@ There have been validation errors: [
 
 ### Middleware Options
 ####`skipValidationOnFirstError`
-_{ 'skipValidationOnFirstError': boolean = false, ... }_
+_{ skipValidationOnFirstError: boolean = false, ... }_
 
 The `skipValidationOnFirstError` option is set default to `false` that works as before, runs all validations and save the errors.
 
 If set to `true` will skip next validations when the first sync validation fails. All async validation do not follow this rule. Each validation runs in order that was defiened.
 
 ####`errorFormatter`
-_{ 'errorFormatter': function(param,msg,value), ... }_
+_{ errorFormatter: (param,msg,value) => string, ... }_
 
 The `errorFormatter` option can be used to specify a function that can be used to format the objects that populate the error array that is returned in `ctx.validationErrors()`. It should return an `Object` that has `param`, `msg`, and `value` keys defined.
 
 ```javascript
 // In this example, the formParam value is going to get morphed into form body format useful for printing.
 app.use(koaValidator({
-  errorFormatter: function(param, msg, value) {
-      var namespace = param.split('.')
-      , root    = namespace.shift()
-      , formParam = root;
+  errorFormatter: (param, msg, value) => {
+    const namespace = param.split('.');
+    const root = namespace.shift();
+    let formParam = root;
 
     while(namespace.length) {
-      formParam += '[' + namespace.shift() + ']';
+      formParam = `${formParam}[${namespace.shift}]`;
     }
+
     return {
       param : formParam,
       msg   : msg,
@@ -135,7 +136,7 @@ app.use(koaValidator({
 ```
 
 ####`customValidators`
-_{ "validatorName": function(value, [additional arguments], ctx), ... }_
+_{ validatorName: (value, [additional arguments], ctx) => boolean | (value, [additional arguments], ctx) => Promise<boolean>, ... }_
 
 
 The `customValidators` option can be used to add additional validation methods as needed. This option should be an `Object` defining the validator names and associated validation functions.
@@ -149,12 +150,8 @@ Define your custom validators:
 ```javascript
 app.use(koaValidator({
  customValidators: {
-    isArray: function(value) {
-        return Array.isArray(value);
-    },
-    gte: function(param, num) {
-        return param >= num;
-    }
+    isArray: (value) => Array.isArray(value),
+    gte: (param, num) => param >= num,
  }
 }));
 ```
@@ -164,7 +161,7 @@ ctx.checkBody('users', 'Users must be an array').isArray();
 ctx.checkQuery('time', 'Time must be an integer great than or equal to 5').isInt().gte(5)
 ```
 ####`customSanitizers`
-_{ "sanitizerName": function(value, [additional arguments]), ... }_
+_{ sanitizerName: (value, [additional arguments]) => any, ... }_
 
 The `customSanitizers` option can be used to add additional sanitizers methods as needed. This option should be an `Object` defining the sanitizer names and associated functions.
 
@@ -173,8 +170,8 @@ Define your custom sanitizers:
 ```javascript
 app.use(koaValidator({
  customSanitizers: {
-    toSanitizeSomehow: function(value) {
-        var newValue = value;//some operations
+    toSanitizeSomehow: (value) => {
+        const newValue = value; //some operations
         return newValue;
     },
  }
@@ -229,24 +226,11 @@ If you are using async you need to return a boolean to know if valid or not.
  ```javascript
 app.use(koaValidator({
   customValidators: {
-    isUsernameAvailable: function(username) {
-      return new Promise(function(resolve, reject) {
-        User.findOne({ username: username })
-        .then(function(user) {
-          if (user) {
-            resolve(user);
-          }
-          else {
-            reject(user);
-          }
-        })
-        .catch(function(error){
-          if (error) {
-            reject(error);
-          }
-        });
-      });
-    }
+    isUsernameAvailable: (username) => new Promise((resolve, reject) => {
+      User.findOne({ username: username })
+      .then(user => { resolve(!!user); })
+      .catch(reject);
+    });
   }
 }));
 
@@ -260,13 +244,13 @@ Schema validation will be used if you pass an object to any of the validator met
 
 ```javascript
 ctx.checkBody({
- 'email': {
+  email: {
     notEmpty: true,
     isEmail: {
       errorMessage: 'Invalid Email'
     }
   },
-  'password': {
+  password: {
     notEmpty: true,
     matches: {
       options: ['example', 'i'] // pass options to the validator with the options property as an array
@@ -289,7 +273,7 @@ You can also define a specific location to validate against in the schema by add
 
 ```javascript
 ctx.check({
- 'email': {
+  email: {
     in: 'query',
     notEmpty: true,
     isEmail: {
@@ -304,14 +288,14 @@ Please remember that the `in` attribute will have always highest priority. This 
 
 ```javascript
 const schema = {
- 'email': {
+  email: {
     in: 'query',
     notEmpty: true,
     isEmail: {
       errorMessage: 'Invalid Email'
     }
   },
-  'password': {
+  password: {
     notEmpty: true,
     matches: {
       options: ['example', 'i'] // pass options to the validator with the options property as an array

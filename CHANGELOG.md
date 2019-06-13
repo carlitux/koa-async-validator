@@ -1,7 +1,9 @@
 ## Change Log
 
-### upcoming 2018/10/17
-- [4105792](https://github.com/carlitux/koa-async-validator/commit/410579275409470fca2d65226e606da24331bec0) Use prettier to format code (@carlitux)
+### upcoming 2019/06/13
+- [e42f39f](https://github.com/carlitux/koa-async-validator/commit/e42f39f47a9957844027a87f0f2e02de9aa92bb2) Add skipValidationOnFirstError option to short circuit (@carlitux)
+- [fae39cf](https://github.com/carlitux/koa-async-validator/commit/fae39cf669fe075bb382e358aaba9d8f5aaca4ce) Update packages and move to node 10 version (@carlitux)
+- [2b32bc8](https://github.com/carlitux/koa-async-validator/commit/2b32bc8640c3c953652f2ec7ad84d4775b75961a) Use prettier to format code (@carlitux)
 - [5be2d15](https://github.com/carlitux/koa-async-validator/commit/5be2d1581484b63d4871efe569c8b656434b29e8) More version of node to test (@carlitux)
 - [2fb3086](https://github.com/carlitux/koa-async-validator/commit/2fb3086227e0d2d7e2b95af4f7c17e4d56a86470) Set ctx into container to access in custom validators (@carlitux)
 - [854608e](https://github.com/carlitux/koa-async-validator/commit/854608e85cf659b9ae1116bdad2bc10a7b2b0bc6) Fix readme (@carlitux)
