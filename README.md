@@ -421,7 +421,7 @@ Only sanitizes `ctx.headers`. This method is not covered by the general `ctx.san
 
 ### Regex routes
 
-Express allows you to define regex routes like:
+Koa-router allows you to define regex routes like:
 
 ```javascript
 app.get(/\/test(\d+)/, function() {});
